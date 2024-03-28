@@ -9,7 +9,7 @@ type UserLoginRequest struct {
 }
 
 type UserRegisterRequest struct {
-	ID             string    `json:"id"`
+	ID             uint64    `gorm:"column:id;primaryKey"`
 	Name           string    `json:"name" validate:"required"`
 	Email          string    `json:"email" validate:"required,email"`
 	Phone          string    `json:"phone" validate:"required"`

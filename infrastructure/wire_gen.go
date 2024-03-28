@@ -20,8 +20,8 @@ import (
 
 // Injectors from dependency.go:
 
-func NewDependency(context2 context.Context, logger mlog.Logger, validator mvalidator.Validator, Config *config.ConfigGroup, Database *gorm.DB) *Dependency {
-	userRepository := repository.NewUserRepository(Database, Config)
+func NewDependency(context2 context.Context, logger mlog.Logger, validator mvalidator.Validator, config2 *config.ConfigGroup, database *gorm.DB) *Dependency {
+	userRepository := repository.NewUserRepository(database, config2)
 	userService := service.NewUserService(userRepository)
 	iUserHandler := handler.NewUserHandler(context2, logger, validator, userService)
 	dependency := &Dependency{

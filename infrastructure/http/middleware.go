@@ -2,6 +2,7 @@ package infrastructure_http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/yusufwib/blockchain-medical-record/handler"
@@ -39,12 +40,18 @@ func (httpServer *HttpServer) PrepareMiddleware(app *infrastructure.App) {
 func JWTMiddleware(jwtKey string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			tokenString := c.Request().Header.Get("Authorization")
-			if tokenString == "" {
+			authHeader := c.Request().Header.Get("Authorization")
+			if authHeader == "" {
 				return handler.ErrorResponse(c, http.StatusUnauthorized, "missing JWT token", nil)
 			}
 
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Extract the token from the Authorization header
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == "" {
+				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid token format", nil)
+			}
+
+			token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				// Check the token signing method
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, handler.ErrorResponse(c, http.StatusUnauthorized, "invalid token", nil)
@@ -52,16 +59,12 @@ func JWTMiddleware(jwtKey string) echo.MiddlewareFunc {
 				return jwtKey, nil
 			})
 
-			if err != nil || !token.Valid {
-				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid token", nil)
-			}
-
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
 				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid token claims", nil)
 			}
 
-			userID, ok := claims["id"].(uint64)
+			userID, _ := claims["id"].(float64)
 			if !ok {
 				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid user ID in token", nil)
 			}

@@ -59,11 +59,6 @@ func (i *UserHandler) FindByID(ctx echo.Context) error {
 	if err != nil {
 		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 	}
-	// TODO:
-	// // Example usage of id and type in handler
-	// id := c.Get("id").(uint64)
-	// userType := c.Get("type").(string)
-	// // Use id and userType in your handler logic
 
 	i.Logger.InfoT(traceID, "get employee by id", mlog.Any("id", ID))
 

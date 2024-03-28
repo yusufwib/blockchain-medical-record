@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/models/duser"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -40,7 +41,6 @@ func (r *UserRepository) FindByID(ctx context.Context, ID uint64) (user duser.Us
 	return user, nil
 }
 
-// TODO: validate using email & password
 func (r *UserRepository) Login(ctx context.Context, req duser.UserLoginRequest) (res duser.UserLoginResponse, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -49,6 +49,11 @@ func (r *UserRepository) Login(ctx context.Context, req duser.UserLoginRequest) 
 	var user duser.User
 	if err = trx.WithContext(ctxWT).Table(duser.TableName()).Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return res, fmt.Errorf("error while retrieving user: %w", err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return res, fmt.Errorf("invalid password")
 	}
 
 	token, err := r.generateJWTToken(user)
@@ -63,11 +68,17 @@ func (r *UserRepository) Login(ctx context.Context, req duser.UserLoginRequest) 
 	}, nil
 }
 
-// TODO: hash password
 func (r *UserRepository) Register(ctx context.Context, req duser.UserRegisterRequest) (user duser.UserResponse, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return user, fmt.Errorf("error while hashing password: %w", err)
+	}
+
+	req.Password = string(hashedPassword)
 
 	if err = trx.WithContext(ctxWT).Table(duser.TableName()).Create(&req).Error; err != nil {
 		return user, fmt.Errorf("err while register user: %w", err)
@@ -86,7 +97,7 @@ func (r *UserRepository) generateJWTToken(user duser.User) (string, error) {
 		"email": user.Email,
 		"name":  user.Name,
 		"type":  user.Type,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"exp":   time.Now().Add(time.Hour * 24 * 30 * 365).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(r.Config.Server.JWTSecretKey))

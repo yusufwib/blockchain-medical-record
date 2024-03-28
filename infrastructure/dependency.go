@@ -21,11 +21,13 @@ type Dependency struct {
 	UserHandler handler.IUserHandler
 }
 
-func NewDependency(context context.Context,
+func NewDependency(
+	context context.Context,
 	logger mlog.Logger,
 	validator mvalidator.Validator,
-	Config *config.ConfigGroup,
-	Database *gorm.DB) *Dependency {
+	config *config.ConfigGroup,
+	database *gorm.DB,
+) *Dependency {
 	wire.Build(
 		setUserHandler,
 		wire.Struct(new(Dependency), "*"),
