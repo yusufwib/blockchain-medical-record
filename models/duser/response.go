@@ -15,8 +15,13 @@ type UserResponse struct {
 	DateOfBirth    time.Time `json:"date_of_birth,omitempty"`
 	PlaceOfBirth   string    `json:"place_of_birth,omitempty"`
 	Address        string    `json:"address,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+
+	Height     float64 `json:"height,omitempty"`
+	Weight     float64 `json:"weight,omitempty"`
+	Allergies  string  `json:"allergies,omitempty"`
+	BloodGroup string  `json:"blood_group,omitempty"`
+
+	// TODO: add doctor
 }
 
 type UserLoginResponse struct {

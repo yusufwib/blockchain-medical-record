@@ -1,6 +1,8 @@
 package duser
 
-import "time"
+import (
+	"time"
+)
 
 type UserLoginRequest struct {
 	Email    string   `json:"email" validate:"required,email"`
@@ -21,6 +23,11 @@ type UserRegisterRequest struct {
 	DateOfBirth    time.Time `json:"date_of_birth" validate:"required"`
 	PlaceOfBirth   string    `json:"place_of_birth" validate:"required"`
 	Address        string    `json:"address" validate:"required"`
+
+	Height     float64 `json:"height" validate:"required"`
+	Weight     float64 `json:"weight" validate:"required"`
+	Allergies  string  `json:"allergies" validate:"required"`
+	BloodGroup string  `json:"blood_group" validate:"required"`
 }
 
 func (e UserRegisterRequest) ToUser() User {
@@ -36,7 +43,15 @@ func (e UserRegisterRequest) ToUser() User {
 		DateOfBirth:    e.DateOfBirth,
 		PlaceOfBirth:   e.PlaceOfBirth,
 		Address:        e.Address,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+	}
+}
+
+func (e UserRegisterRequest) ToPatient(ID uint64) map[string]interface{} {
+	return map[string]interface{}{
+		"height":      e.Height,
+		"weight":      e.Weight,
+		"allergies":   e.Allergies,
+		"blood_group": e.BloodGroup,
+		"user_id":     ID,
 	}
 }

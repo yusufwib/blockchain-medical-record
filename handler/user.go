@@ -20,6 +20,7 @@ type (
 		Register(ctx echo.Context) error
 		Login(ctx echo.Context) error
 		FindByID(ctx echo.Context) error
+		GetDetails(ctx echo.Context) error
 	}
 
 	UserHandler struct {
@@ -60,14 +61,33 @@ func (i *UserHandler) FindByID(ctx echo.Context) error {
 		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 	}
 
-	i.Logger.InfoT(traceID, "get employee by id", mlog.Any("id", ID))
+	i.Logger.InfoT(traceID, "get user by id", mlog.Any("id", ID))
 
-	if employee, err := i.UserService.FindByID(usecaseContext, ID); err != nil {
+	userType, _ := ctx.Get("type").(string)
+	if user, err := i.UserService.FindByID(usecaseContext, ID, userType); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-	} else if employee.IsEmpty() {
-		return ErrorResponse(ctx, http.StatusNotFound, "No employees found", nil)
+	} else if user.IsEmpty() {
+		return ErrorResponse(ctx, http.StatusNotFound, "No users found", nil)
 	} else {
-		return SuccessResponse(ctx, http.StatusOK, employee)
+		return SuccessResponse(ctx, http.StatusOK, user)
+	}
+}
+
+func (i *UserHandler) GetDetails(ctx echo.Context) error {
+	traceID := trace_id.GetID(ctx)
+	usecaseContext := trace_id.SetIDx(ctx.Request().Context(), traceID)
+
+	userType, _ := ctx.Get("type").(string)
+	ID, _ := ctx.Get("id").(uint64)
+
+	i.Logger.InfoT(traceID, "get user by id", mlog.Any("id", ID))
+
+	if user, err := i.UserService.FindByID(usecaseContext, ID, userType); err != nil {
+		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	} else if user.IsEmpty() {
+		return ErrorResponse(ctx, http.StatusNotFound, "No users found", nil)
+	} else {
+		return SuccessResponse(ctx, http.StatusOK, user)
 	}
 }
 

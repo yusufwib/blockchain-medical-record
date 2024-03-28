@@ -18,6 +18,7 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	v1User.POST("/register", dependency.UserHandler.Register)
 
 	v1User.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))
+	v1User.GET("/details", dependency.UserHandler.GetDetails)
 	v1User.GET("/:id", dependency.UserHandler.FindByID)
 
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)

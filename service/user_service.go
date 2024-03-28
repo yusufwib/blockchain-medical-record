@@ -17,8 +17,8 @@ func NewUserService(r repository.UserRepository) UserService {
 	}
 }
 
-func (s UserService) FindByID(ctx context.Context, ID uint64) (duser.UserResponse, error) {
-	return s.UserRepository.FindByID(ctx, ID)
+func (s UserService) FindByID(ctx context.Context, ID uint64, userType string) (duser.UserResponse, error) {
+	return s.UserRepository.FindByID(ctx, ID, userType)
 }
 
 func (s UserService) Login(ctx context.Context, req duser.UserLoginRequest) (duser.UserLoginResponse, error) {

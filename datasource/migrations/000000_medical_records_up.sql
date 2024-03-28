@@ -29,6 +29,16 @@ CREATE TABLE health_services (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO public.health_services (id, name, image_url, created_at, updated_at)
+VALUES 
+    (DEFAULT, 'Dokter Umum', null, DEFAULT, DEFAULT),
+    (DEFAULT, 'Spesialis Penyakit Dalam', null, DEFAULT, DEFAULT),
+       (DEFAULT, 'Spesialis Gizi', null, DEFAULT, DEFAULT),
+        (DEFAULT, 'Spesialis Kandungan', null, DEFAULT, DEFAULT),
+       (DEFAULT, 'Dokter Gigi', null, DEFAULT, DEFAULT),
+       (DEFAULT, 'Seksologis', null, DEFAULT, DEFAULT)
+
+
 -- Create doctors table 
 CREATE TABLE doctors (
     id SERIAL PRIMARY KEY,
@@ -55,7 +65,8 @@ CREATE TABLE patients (
     user_id INT NOT NULL,
     height DECIMAL(5,2),
     weight DECIMAL(5,2),
-    allergies TEXT[],
+    allergies TEXT,
+    blood_group VARCHAR(50) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
