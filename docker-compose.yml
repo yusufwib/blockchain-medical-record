@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:latest
+    container_name: PostgresContainer
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+
+  golang_api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: GolangAPIContainer
+    restart: always
+    environment:
+      - DATABASE_HOST=postgres_db
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres123
+      - DATABASE_NAME=employees
+    ports:
+      - '9009:9009'
+    depends_on:
+      - postgres_db
+
+volumes:
+  postgres_db:
+    driver: local
