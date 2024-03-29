@@ -1,6 +1,9 @@
 package duser
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type UserResponse struct {
 	ID             uint64    `json:"id"`
@@ -21,7 +24,9 @@ type UserResponse struct {
 	Allergies  string  `json:"allergies,omitempty"`
 	BloodGroup string  `json:"blood_group,omitempty"`
 
-	// TODO: add doctor
+	HealthServiceID   uint64          `json:"health_service_id,omitempty"`
+	HealthServiceName string          `json:"health_service_name,omitempty"`
+	AvailableSchedule json.RawMessage `json:"available_schedule,omitempty"`
 }
 
 type UserLoginResponse struct {
@@ -31,5 +36,7 @@ type UserLoginResponse struct {
 }
 
 func (u UserResponse) IsEmpty() bool {
-	return u == UserResponse{}
+	return u.ID == 0 &&
+		u.Name == "" &&
+		u.Email == ""
 }

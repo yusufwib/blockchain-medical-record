@@ -100,13 +100,13 @@ func (r *UserRepository) Register(ctx context.Context, req duser.UserRegisterReq
 func (r *UserRepository) getUserByID(ctx context.Context, trx *gorm.DB, ID uint64, userType string) (user duser.UserResponse, err error) {
 	query := trx.WithContext(ctx).Table(duser.TableName())
 
-	fmt.Println(userType, "userType")
 	if userType == string(duser.Patient) {
 		query = query.Select("patients.*, users.*").
 			Joins("LEFT JOIN patients ON users.id = patients.user_id")
 	} else if userType == string(duser.Doctor) {
-		query = query.Select("doctors.*, users.*").
-			Joins("LEFT JOIN doctors ON users.id = doctors.user_id")
+		query = query.Select("doctors.*, users.*, health_services.name AS health_service_name").
+			Joins("LEFT JOIN doctors ON users.id = doctors.user_id").
+			Joins("JOIN health_services ON doctors.health_service_id = health_services.id")
 	}
 
 	if err = query.First(&user, ID).Error; err != nil {
