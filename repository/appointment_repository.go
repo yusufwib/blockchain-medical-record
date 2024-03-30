@@ -111,6 +111,22 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, patientID
 	return
 }
 
+func (r *AppointmentRepository) UpdateAppointmentStatus(ctx context.Context, ID uint64, req dappointment.AppointmentUpdateStatusRequest) (err error) {
+	trx := r.session(ctx)
+	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if err = trx.WithContext(ctxWT).Table(dappointment.TableName()).
+		Where("id = ?", ID).
+		Updates(map[string]interface{}{
+			"status": req.Status,
+		}).Error; err != nil {
+		return fmt.Errorf("error while update status appointments: %w", err)
+	}
+
+	return
+}
+
 func (r *AppointmentRepository) generateAccessKey(appointment dappointment.Appointment) (string, error) {
 	claims := jwt.MapClaims{
 		"appointment_id": appointment.ID,

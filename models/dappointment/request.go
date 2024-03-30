@@ -16,6 +16,10 @@ type AppointmentCreateRequest struct {
 	ScheduleTime    string `json:"schedule_time" validate:"required"`
 }
 
+type AppointmentUpdateStatusRequest struct {
+	Status AppointmentStatus `json:"status" validate:"required"`
+}
+
 type AppointmentFilter struct {
 	// general
 	ScheduleDate    string `json:"schedule_date"`

@@ -31,6 +31,7 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	v1Appointment.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))
 	v1Appointment.GET("", dependency.AppointmentHandler.FindAppointmentByPatientID)
 	v1Appointment.POST("", dependency.AppointmentHandler.CreateAppointment)
+	v1Appointment.PATCH("/:id", dependency.AppointmentHandler.UpdateAppointmentStatus)
 
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 }

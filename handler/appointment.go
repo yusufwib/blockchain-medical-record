@@ -20,6 +20,7 @@ type (
 	IAppointmentHandler interface {
 		CreateAppointment(ctx echo.Context) error
 		FindAppointmentByPatientID(ctx echo.Context) error
+		UpdateAppointmentStatus(ctx echo.Context) error
 	}
 
 	AppointmentHandler struct {
@@ -96,6 +97,33 @@ func (i *AppointmentHandler) CreateAppointment(ctx echo.Context) error {
 	i.Logger.InfoT(traceID, "create appointment", mlog.Any("payload", req))
 
 	if err := i.AppointmentService.CreateAppointment(usecaseContext, ID, req); err != nil {
+		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	} else {
+		return SuccessResponse(ctx, http.StatusCreated, nil)
+	}
+}
+
+func (i *AppointmentHandler) UpdateAppointmentStatus(ctx echo.Context) error {
+	traceID := trace_id.GetID(ctx)
+	usecaseContext := trace_id.SetIDx(ctx.Request().Context(), traceID)
+
+	ID, err := strconv.ParseUint(ctx.Param("id"), 0, 64)
+	if err != nil {
+		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+	}
+
+	var req dappointment.AppointmentUpdateStatusRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ErrorResponse(ctx, http.StatusBadRequest, "bad request", nil)
+	}
+
+	if mapErr, err := i.Validator.Struct(req); err != nil {
+		return ErrorResponse(ctx, http.StatusBadRequest, "invalid payload", mapErr)
+	}
+
+	i.Logger.InfoT(traceID, "update status appointment", mlog.Any("payload", req))
+
+	if err := i.AppointmentService.UpdateAppointmentStatus(usecaseContext, ID, req); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else {
 		return SuccessResponse(ctx, http.StatusCreated, nil)
