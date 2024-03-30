@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/yusufwib/blockchain-medical-record/config"
+	"github.com/yusufwib/blockchain-medical-record/models/ddoctor"
 	"github.com/yusufwib/blockchain-medical-record/models/dpatient"
 	"github.com/yusufwib/blockchain-medical-record/models/duser"
 	"golang.org/x/crypto/bcrypt"
@@ -59,7 +60,31 @@ func (r *UserRepository) Login(ctx context.Context, req duser.UserLoginRequest) 
 		return res, fmt.Errorf("invalid user type")
 	}
 
-	token, err := r.generateJWTToken(user)
+	var (
+		patientID uint64
+		doctorID  uint64
+	)
+
+	if user.Type == duser.Patient {
+		var patient dpatient.Patient
+		if err = trx.WithContext(ctxWT).Table(dpatient.TableName()).
+			Where("user_id = ?", user.ID).
+			First(&patient).Error; err != nil {
+			return res, fmt.Errorf("error while retrieving patient: %w", err)
+		}
+		patientID = patient.ID
+	} else {
+		var doctor ddoctor.Doctor
+		if err = trx.WithContext(ctxWT).Table(ddoctor.TableName()).
+			Select("doctors.id").
+			Where("user_id = ?", user.ID).
+			First(&doctor).Error; err != nil {
+			return res, fmt.Errorf("error while retrieving doctor: %w", err)
+		}
+		doctorID = doctor.ID
+	}
+
+	token, err := r.generateJWTToken(user, patientID, doctorID)
 	if err != nil {
 		return res, fmt.Errorf("error while generating JWT token: %w", err)
 	}
@@ -101,10 +126,10 @@ func (r *UserRepository) getUserByID(ctx context.Context, trx *gorm.DB, ID uint6
 	query := trx.WithContext(ctx).Table(duser.TableName())
 
 	if userType == string(duser.Patient) {
-		query = query.Select("patients.*, users.*").
+		query = query.Select("patients.*, users.*, patients.id AS patient_id").
 			Joins("LEFT JOIN patients ON users.id = patients.user_id")
 	} else if userType == string(duser.Doctor) {
-		query = query.Select("doctors.*, users.*, health_services.name AS health_service_name").
+		query = query.Select("doctors.*, users.*, health_services.name AS health_service_name, doctors.id AS doctor_id").
 			Joins("LEFT JOIN doctors ON users.id = doctors.user_id").
 			Joins("JOIN health_services ON doctors.health_service_id = health_services.id")
 	}
@@ -116,13 +141,15 @@ func (r *UserRepository) getUserByID(ctx context.Context, trx *gorm.DB, ID uint6
 	return user, nil
 }
 
-func (r *UserRepository) generateJWTToken(user duser.User) (string, error) {
+func (r *UserRepository) generateJWTToken(user duser.User, patientID, doctorID uint64) (string, error) {
 	claims := jwt.MapClaims{
-		"id":    user.ID,
-		"email": user.Email,
-		"name":  user.Name,
-		"type":  user.Type,
-		"exp":   time.Now().Add(time.Hour * 24 * 30 * 365).Unix(),
+		"id":         user.ID,
+		"email":      user.Email,
+		"name":       user.Name,
+		"type":       user.Type,
+		"patient_id": patientID,
+		"doctor_id":  doctorID,
+		"exp":        time.Now().Add(time.Hour * 24 * 30 * 365).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(r.Config.Server.JWTSecretKey))

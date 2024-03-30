@@ -27,9 +27,13 @@ func NewDependency(context2 context.Context, logger mlog.Logger, validator mvali
 	healthRepository := repository.NewHealthRepository(database, config2)
 	healthService := service.NewHealthService(healthRepository)
 	iHealthHandler := handler.NewHealthHandler(context2, logger, validator, healthService)
+	appointmentRepository := repository.NewAppointmentRepository(database, config2)
+	appointmentService := service.NewAppointmentService(appointmentRepository)
+	iAppointmentHandler := handler.NewAppointmentHandler(context2, logger, validator, appointmentService)
 	dependency := &Dependency{
-		UserHandler:   iUserHandler,
-		HealthHandler: iHealthHandler,
+		UserHandler:        iUserHandler,
+		HealthHandler:      iHealthHandler,
+		AppointmentHandler: iAppointmentHandler,
 	}
 	return dependency
 }
@@ -37,10 +41,13 @@ func NewDependency(context2 context.Context, logger mlog.Logger, validator mvali
 // dependency.go:
 
 type Dependency struct {
-	UserHandler   handler.IUserHandler
-	HealthHandler handler.IHealthHandler
+	UserHandler        handler.IUserHandler
+	HealthHandler      handler.IHealthHandler
+	AppointmentHandler handler.IAppointmentHandler
 }
 
 var setUserHandler = wire.NewSet(repository.NewUserRepository, service.NewUserService, handler.NewUserHandler)
 
 var setHealthHandler = wire.NewSet(repository.NewHealthRepository, service.NewHealthService, handler.NewHealthHandler)
+
+var setAppointmentHandler = wire.NewSet(repository.NewAppointmentRepository, service.NewAppointmentService, handler.NewAppointmentHandler)

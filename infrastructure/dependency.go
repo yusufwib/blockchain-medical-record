@@ -18,8 +18,9 @@ import (
 )
 
 type Dependency struct {
-	UserHandler   handler.IUserHandler
-	HealthHandler handler.IHealthHandler
+	UserHandler        handler.IUserHandler
+	HealthHandler      handler.IHealthHandler
+	AppointmentHandler handler.IAppointmentHandler
 }
 
 func NewDependency(
@@ -32,6 +33,7 @@ func NewDependency(
 	wire.Build(
 		setUserHandler,
 		setHealthHandler,
+		setAppointmentHandler,
 		wire.Struct(new(Dependency), "*"),
 	)
 	return nil
@@ -47,4 +49,10 @@ var setHealthHandler = wire.NewSet(
 	repository.NewHealthRepository,
 	service.NewHealthService,
 	handler.NewHealthHandler,
+)
+
+var setAppointmentHandler = wire.NewSet(
+	repository.NewAppointmentRepository,
+	service.NewAppointmentService,
+	handler.NewAppointmentHandler,
 )

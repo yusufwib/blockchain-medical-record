@@ -45,6 +45,7 @@ CREATE TABLE doctors (
     health_service_id INT NOT NULL,
     user_id INT NOT NULL,
     available_schedule JSONB NOT NULL,
+    description TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
@@ -82,8 +83,11 @@ CREATE TABLE appointments (
     record_number VARCHAR(100) NOT NULL,
     doctor_id INT NOT NULL,
     patient_id INT NOT NULL,
-    symptoms TEXT,
+    health_service_id INT NOT NULL,
+    symptoms TEXT NOT NULL,
     status appointment_status NOT NULL,
+    schedule_time TEXT NOT NULL,
+    schedule_date TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 

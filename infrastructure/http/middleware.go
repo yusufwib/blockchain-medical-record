@@ -69,12 +69,13 @@ func JWTMiddleware(jwtKey string) echo.MiddlewareFunc {
 				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid user ID in token", nil)
 			}
 
-			userType, ok := claims["type"].(string)
-			if !ok {
-				return handler.ErrorResponse(c, http.StatusUnauthorized, "invalid user type in token", nil)
-			}
+			patientID, _ := claims["patient_id"].(float64)
+			doctorID, _ := claims["doctor_id"].(float64)
+			userType, _ := claims["type"].(string)
 
 			c.Set("id", uint64(userID))
+			c.Set("patient_id", uint64(patientID))
+			c.Set("doctor_id", uint64(doctorID))
 			c.Set("type", userType)
 			return next(c)
 		}

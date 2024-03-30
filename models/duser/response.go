@@ -23,10 +23,13 @@ type UserResponse struct {
 	Weight     float64 `json:"weight,omitempty"`
 	Allergies  string  `json:"allergies,omitempty"`
 	BloodGroup string  `json:"blood_group,omitempty"`
+	PatientID  uint64  `json:"patient_id,omitempty"`
 
 	HealthServiceID   uint64          `json:"health_service_id,omitempty"`
 	HealthServiceName string          `json:"health_service_name,omitempty"`
 	AvailableSchedule json.RawMessage `json:"available_schedule,omitempty"`
+	DoctorID          uint64          `json:"doctor_id,omitempty"`
+	Description       string          `json:"description,omitempty"`
 }
 
 type UserLoginResponse struct {

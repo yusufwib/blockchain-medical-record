@@ -6,7 +6,7 @@ import (
 	"github.com/yusufwib/blockchain-medical-record/infrastructure"
 )
 
-// @title Employee API
+// @title Medical Records API
 // @version 1.0
 func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	dependency := infrastructure.NewDependency(app.Context, app.Logger, app.Validator, app.Cfg, app.Database)
@@ -26,6 +26,11 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 
 	v1Service.GET("", dependency.HealthHandler.FindAll)
 	v1Service.GET("/:id/doctors", dependency.HealthHandler.FindDoctorByHealthID)
+
+	v1Appointment := v1.Group("/appointments")
+	v1Appointment.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))
+	v1Appointment.GET("", dependency.AppointmentHandler.FindAppointmentByPatientID)
+	v1Appointment.POST("", dependency.AppointmentHandler.CreateAppointment)
 
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 }
