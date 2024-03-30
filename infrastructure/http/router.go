@@ -21,5 +21,11 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	v1User.GET("/details", dependency.UserHandler.GetDetails)
 	v1User.GET("/:id", dependency.UserHandler.FindByID)
 
+	v1Service := v1.Group("/services")
+	v1Service.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))
+
+	v1Service.GET("", dependency.HealthHandler.FindAll)
+	v1Service.GET("/:id/doctors", dependency.HealthHandler.FindDoctorByHealthID)
+
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 }
