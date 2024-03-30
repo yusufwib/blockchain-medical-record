@@ -24,7 +24,7 @@ services:
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=postgres123
-      - DATABASE_NAME=employees
+      - DATABASE_NAME=blockchain_medical_record
     ports:
       - '9009:9009'
     depends_on:

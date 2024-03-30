@@ -1,7 +1,4 @@
-# Mekari Backend Golang Technical Test
-
-This document provides instructions on how to set up, run, and use the Mekari Backend Golang application, which utilizes the Echo framework, PostgreSQL, Docker, Go-Wire for dependency injection, Swagger for API documentation, and follows a clean architecture pattern and SOLID principles.
-
+# Blockchain Medical Record Services
 
 ## Getting Started
 
@@ -14,35 +11,6 @@ docker-compose up
 This command reads the docker-compose.yml file and sets up the PostgreSQL and Golang API containers.
 
 The application will be accessible at http://localhost:9009
-
-## API Endpoints
-
-**Base URL:** http://localhost:9009
-
-**Swagger UI:** http://localhost:9009/swagger/
-
-**Employees Endpoints:**
-
--   **GET /employees:**
-    -   Retrieves a list of all employees.
-    -   Input: None
-    -   Output: JSON array of employee objects
--   **GET /employees/:id:**
-    -   Retrieves a single employee by ID.
-    -   Input: Path parameter  `id`  (employee ID)
-    -   Output: JSON object representing the employee
--   **POST /employees:**
-    -   Creates a new employee.
-    -   Input: JSON object with employee data
-    -   Output: JSON object representing the created employee with its assigned ID
--   **PUT /employees/:id:**
-    -   Updates an existing employee by ID.
-    -   Input: Path parameter  `id`  (employee ID) and JSON object with updated employee data
-    -   Output: JSON object representing the updated employee
--   **DELETE /employees/:id:**
-    -   Deletes an employee by ID.
-    -   Input: Path parameter  `id`  (employee ID)
-    -   Output: Empty response with a 200 status code if successful
 
 ## Additional Notes
 
@@ -59,7 +27,6 @@ The application will be accessible at http://localhost:9009
 ## Project Structure
 
 ```plaintext
-.
 ├── Dockerfile.api
 ├── Makefile
 ├── README.md
@@ -68,8 +35,9 @@ The application will be accessible at http://localhost:9009
 │   └── env.example
 ├── datasource
 │   ├── migrations
-│   │   ├── 000000_employee_down.sql
-│   │   └── 000000_employee_up.sql
+│   │   ├── 000000_medical_records_down.sql
+│   │   ├── 000000_medical_records_dummy.sql
+│   │   └── 000000_medical_records_up.sql
 │   └── pgsql.go
 ├── docker-compose.yml
 ├── docs
@@ -79,8 +47,10 @@ The application will be accessible at http://localhost:9009
 ├── go.mod
 ├── go.sum
 ├── handler
-│   ├── employee.go
-│   └── response.go
+│   ├── appointment.go
+│   ├── health.go
+│   ├── response.go
+│   └── user.go
 ├── infrastructure
 │   ├── application.go
 │   ├── dependency.go
@@ -91,17 +61,32 @@ The application will be accessible at http://localhost:9009
 │   └── wire_gen.go
 ├── main.go
 ├── models
-│   ├── demployee
-│   │   ├── employee.go
+│   ├── dappointment
+│   │   ├── appointment.go
 │   │   ├── request.go
 │   │   └── response.go
+│   ├── ddoctor
+│   │   └── doctor.go
+│   ├── dhealthservice
+│   │   └── healthservice.go
+│   ├── dmedicalrecordaccess
+│   │   └── medicalrecordaccess.go
+│   ├── dpatient
+│   │   └── patient.go
+│   ├── duser
+│   │   ├── request.go
+│   │   ├── response.go
+│   │   └── user.go
 │   └── server
 │       └── server.go
 ├── repository
-│   ├── employee_repository.go
-│   └── employeee_repository_test.go
+│   ├── appointment_repository.go
+│   ├── health_repository.go
+│   └── user_repository.go
 ├── service
-│   └── employee_service.go
+│   ├── appointment_service.go
+│   ├── health_service.go
+│   └── user_service.go
 └── utils
     ├── envar
     │   └── envar.go
@@ -110,6 +95,8 @@ The application will be accessible at http://localhost:9009
     │   └── mlog.go
     ├── mvalidator
     │   └── mvalidator.go
+    ├── randstr
+    │   └── randstr.go
     ├── slicer
     │   ├── check.go
     │   ├── check_test.go
