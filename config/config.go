@@ -22,16 +22,16 @@ func LoadConfig(envFileLocation string) *ConfigGroup {
 
 	return &ConfigGroup{
 		Server: server.Server{
-			AppName:      envar.GetEnv("APP_NAME", ""),
+			AppName:      envar.GetEnv("APP_NAME", "blockchain_medical_record_service"),
 			HTTPPort:     envar.GetEnv("APP_HTTP_PORT", 9009),
-			JWTSecretKey: envar.GetEnv("JWT_SECRET_KEY", "secret"),
+			JWTSecretKey: envar.GetEnv("JWT_SECRET_KEY", "secret-key"),
 		},
 		PostgreSQLConfig: datasource.PostgreSQLConfig{
 			Host:             envar.GetEnv("DATABASE_HOST", "localhost"),
-			Port:             envar.GetEnv("DATABASE_PORT", 3306),
-			User:             envar.GetEnv("DATABASE_USERNAME", "root"),
-			Password:         envar.GetEnv("DATABASE_PASSWORD", ""),
-			Database:         envar.GetEnv("DATABASE_NAME", ""),
+			Port:             envar.GetEnv("DATABASE_PORT", 5432),
+			User:             envar.GetEnv("DATABASE_USERNAME", "mochi"),
+			Password:         envar.GetEnv("DATABASE_PASSWORD", "mochimochi0"),
+			Database:         envar.GetEnv("DATABASE_NAME", "blockchain_medical_record"),
 			MaxIdleConns:     envar.GetEnv("DATABASE_MAX_IDLE", 20),
 			MaxOpenConns:     envar.GetEnv("DATABASE_MAX_CONN", 100),
 			ConnMaxLifetime:  envar.GetEnv("DATABASE_CONN_LIFETIME", 180),
