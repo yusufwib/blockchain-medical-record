@@ -10,10 +10,10 @@ run-dev:
 	go run ./main.go
 
 build:
-	go build -o mekari-test .
+	go build -o blockchain-medical-record .
 
 clean:
-	rm -f mekari-test
+	rm -f blockchain-medical-record
 
 migrate-up:
 	migrate -database "postgres://$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_NAME)" -source=file://./datasource/migrations up
