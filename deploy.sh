@@ -1,0 +1,1 @@
+go build -o main && sudo systemctl daemon-reload && sudo systemctl stop goweb && sudo systemctl start goweb && sudo systemctl enable goweb && sudo systemctl status goweb
