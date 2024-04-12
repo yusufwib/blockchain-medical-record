@@ -24,6 +24,7 @@ type (
 		UploadFile(ctx echo.Context) error
 		WriteMedicalRecord(ctx echo.Context) error
 		FindMedicalRecordByID(ctx echo.Context) error
+		FindAppointmentDetailByID(ctx echo.Context) error
 	}
 
 	AppointmentHandler struct {
@@ -96,12 +97,32 @@ func (i *AppointmentHandler) FindAppointmentByPatientID(ctx echo.Context) error 
 		AppointmentID:   appointmentID,
 	}
 
-	if user, err := i.AppointmentService.FindAppointmentByPatientID(usecaseContext, ID, filter); err != nil {
+	if appointments, err := i.AppointmentService.FindAppointmentByPatientID(usecaseContext, ID, filter); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-	} else if len(user) == 0 {
+	} else if len(appointments) == 0 {
 		return ErrorResponse(ctx, http.StatusNotFound, "No appointments found.", nil)
 	} else {
-		return SuccessResponse(ctx, http.StatusOK, user)
+		return SuccessResponse(ctx, http.StatusOK, appointments)
+	}
+}
+
+func (i *AppointmentHandler) FindAppointmentDetailByID(ctx echo.Context) error {
+	traceID := trace_id.GetID(ctx)
+	usecaseContext := trace_id.SetIDx(ctx.Request().Context(), traceID)
+
+	ID, err := strconv.ParseUint(ctx.Param("id"), 0, 64)
+	if err != nil {
+		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+	}
+
+	i.Logger.InfoT(traceID, "get appointment detail by id", mlog.Any("id", ID))
+
+	if appointment, err := i.AppointmentService.FindAppointmentDetailByID(usecaseContext, ID); err != nil {
+		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	} else if appointment.IsEmpty() {
+		return ErrorResponse(ctx, http.StatusNotFound, "No appointments found.", nil)
+	} else {
+		return SuccessResponse(ctx, http.StatusOK, appointment)
 	}
 }
 
@@ -194,6 +215,11 @@ func (i *AppointmentHandler) FindMedicalRecordByID(ctx echo.Context) error {
 
 	i.Logger.InfoT(traceID, "get medical record by appointment id", mlog.Any("id", ID))
 
-	res := i.AppointmentService.FindMedicalRecordByID(usecaseContext, ID)
-	return SuccessResponse(ctx, http.StatusOK, res)
+	if res := i.AppointmentService.FindMedicalRecordByID(usecaseContext, ID); err != nil {
+		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	} else if res.IsEmpty() {
+		return ErrorResponse(ctx, http.StatusNotFound, "No medical record found.", nil)
+	} else {
+		return SuccessResponse(ctx, http.StatusOK, res)
+	}
 }

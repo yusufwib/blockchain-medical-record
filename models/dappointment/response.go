@@ -18,3 +18,7 @@ type AppointmentResponse struct {
 	Allergies         string            `json:"allergies"`
 	BookingAt         time.Time         `json:"booking_at"`
 }
+
+func (a AppointmentResponse) IsEmpty() bool {
+	return a == AppointmentResponse{}
+}

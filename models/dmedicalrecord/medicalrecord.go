@@ -13,3 +13,7 @@ type MedicalRecord struct {
 	CreatedAt              time.Time `json:"created_at"`
 	MedicalRecordNumber    string    `json:"medical_record_number"`
 }
+
+func (a MedicalRecord) IsEmpty() bool {
+	return a == MedicalRecord{}
+}

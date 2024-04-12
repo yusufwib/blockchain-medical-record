@@ -43,6 +43,7 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	v1Appointment.PATCH("/:id", dependency.AppointmentHandler.UpdateAppointmentStatus)
 	v1Appointment.PUT("/:id", dependency.AppointmentHandler.WriteMedicalRecord)
 	v1Appointment.GET("/:id", dependency.AppointmentHandler.FindMedicalRecordByID)
+	v1Appointment.GET("/details/:id", dependency.AppointmentHandler.FindAppointmentDetailByID)
 	v1Appointment.POST("/upload", dependency.AppointmentHandler.UploadFile)
 
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)

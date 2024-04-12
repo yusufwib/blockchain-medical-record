@@ -88,6 +88,26 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 	return
 }
 
+func (r *AppointmentRepository) FindAppointmentDetailByID(ctx context.Context, ID uint64) (res dappointment.AppointmentResponse, err error) {
+	trx := r.session(ctx)
+	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	query := trx.Debug().WithContext(ctxWT).Table(dappointment.TableName()).
+		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name, patients.allergies, appointments.created_at AS booking_at").
+		Joins("JOIN doctors ON appointments.doctor_id = doctors.id").
+		Joins("JOIN users u1 ON doctors.user_id = u1.id").
+		Joins("JOIN patients ON appointments.patient_id = patients.id").
+		Joins("JOIN users u2 ON patients.user_id = u2.id").
+		Joins("JOIN health_services hs ON doctors.health_service_id = hs.id")
+
+	if err = query.Where("appointments.id = ?", ID).First(&res).Error; err != nil {
+		return dappointment.AppointmentResponse{}, fmt.Errorf("error while retrieving appointment detail: %w", err)
+	}
+
+	return
+}
+
 func (r *AppointmentRepository) CreateAppointment(ctx context.Context, patientID uint64, req dappointment.AppointmentCreateRequest) (err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
