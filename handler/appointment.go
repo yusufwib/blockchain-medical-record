@@ -99,7 +99,7 @@ func (i *AppointmentHandler) FindAppointmentByPatientID(ctx echo.Context) error 
 	if user, err := i.AppointmentService.FindAppointmentByPatientID(usecaseContext, ID, filter); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else if len(user) == 0 {
-		return ErrorResponse(ctx, http.StatusNotFound, "No appointments found", nil)
+		return ErrorResponse(ctx, http.StatusNotFound, "No appointments found.", nil)
 	} else {
 		return SuccessResponse(ctx, http.StatusOK, user)
 	}
