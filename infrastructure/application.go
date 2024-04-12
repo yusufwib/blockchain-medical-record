@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/utils/mvalidator"
 
@@ -17,6 +18,7 @@ type App struct {
 	Cfg             *config.ConfigGroup
 	Logger          mlog.Logger
 	Database        *gorm.DB
+	LevelDB         *leveldb.DB
 	Validator       mvalidator.Validator
 	Context         context.Context
 }

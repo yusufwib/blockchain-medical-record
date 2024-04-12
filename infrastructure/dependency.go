@@ -6,6 +6,7 @@ package infrastructure
 import (
 	"context"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/handler"
 	"github.com/yusufwib/blockchain-medical-record/repository"
@@ -29,6 +30,7 @@ func NewDependency(
 	validator mvalidator.Validator,
 	config *config.ConfigGroup,
 	database *gorm.DB,
+	levelDB *leveldb.DB,
 ) *Dependency {
 	wire.Build(
 		setUserHandler,
@@ -53,6 +55,7 @@ var setHealthHandler = wire.NewSet(
 
 var setAppointmentHandler = wire.NewSet(
 	repository.NewAppointmentRepository,
+	repository.NewBlockchainRepository,
 	service.NewAppointmentService,
 	handler.NewAppointmentHandler,
 )

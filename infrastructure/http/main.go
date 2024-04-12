@@ -35,6 +35,7 @@ func NewHttpServer(app infrastructure.App) *HttpServer {
 
 	// Use Trace ID
 	httpServer.Echo.Use(trace_id.RequestID)
+	httpServer.Echo.Static("/public", "public")
 
 	// Start echo server on goroutine
 	go func() {

@@ -19,3 +19,5 @@ config/.env
 
 .idea
 main
+blockchain_db
+public/documents

@@ -34,7 +34,7 @@ type AppointmentFilter struct {
 
 func (a AppointmentCreateRequest) ToAppointment(patientID uint64) Appointment {
 	return Appointment{
-		RecordNumber:    randstr.GenerateRandomString("EMR"),
+		RecordNumber:    randstr.GenerateRandomString("APPT"),
 		DoctorID:        a.DoctorID,
 		PatientID:       patientID,
 		Status:          AppointmentStatusWaiting,

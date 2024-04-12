@@ -52,7 +52,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 	}
 
 	query := trx.Debug().WithContext(ctxWT).Table(dappointment.TableName()).
-		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name").
+		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name, patients.allergies, appointments.created_at AS booking_at").
 		Joins("JOIN doctors ON appointments.doctor_id = doctors.id").
 		Joins("JOIN users u1 ON doctors.user_id = u1.id").
 		Joins("JOIN patients ON appointments.patient_id = patients.id").

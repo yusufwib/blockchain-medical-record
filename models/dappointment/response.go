@@ -1,5 +1,7 @@
 package dappointment
 
+import "time"
+
 type AppointmentResponse struct {
 	ID                uint64            `gorm:"column:id;primaryKey" json:"id"`
 	RecordNumber      string            `json:"record_number"`
@@ -13,4 +15,6 @@ type AppointmentResponse struct {
 	HealthServiceName string            `json:"health_service_name"`
 	ScheduleDate      string            `json:"schedule_date"`
 	ScheduleTime      string            `json:"schedule_time"`
+	Allergies         string            `json:"allergies"`
+	BookingAt         time.Time         `json:"booking_at"`
 }

@@ -9,6 +9,7 @@ package infrastructure
 import (
 	"context"
 	"github.com/google/wire"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/handler"
 	"github.com/yusufwib/blockchain-medical-record/repository"
@@ -20,7 +21,7 @@ import (
 
 // Injectors from dependency.go:
 
-func NewDependency(context2 context.Context, logger mlog.Logger, validator mvalidator.Validator, config2 *config.ConfigGroup, database *gorm.DB) *Dependency {
+func NewDependency(context2 context.Context, logger mlog.Logger, validator mvalidator.Validator, config2 *config.ConfigGroup, database *gorm.DB, levelDB *leveldb.DB) *Dependency {
 	userRepository := repository.NewUserRepository(database, config2)
 	userService := service.NewUserService(userRepository)
 	iUserHandler := handler.NewUserHandler(context2, logger, validator, userService)
@@ -28,7 +29,8 @@ func NewDependency(context2 context.Context, logger mlog.Logger, validator mvali
 	healthService := service.NewHealthService(healthRepository)
 	iHealthHandler := handler.NewHealthHandler(context2, logger, validator, healthService)
 	appointmentRepository := repository.NewAppointmentRepository(database, config2)
-	appointmentService := service.NewAppointmentService(appointmentRepository)
+	blockchainRepository := repository.NewBlockchainRepository(levelDB, config2)
+	appointmentService := service.NewAppointmentService(appointmentRepository, blockchainRepository, logger)
 	iAppointmentHandler := handler.NewAppointmentHandler(context2, logger, validator, appointmentService)
 	dependency := &Dependency{
 		UserHandler:        iUserHandler,
@@ -50,4 +52,4 @@ var setUserHandler = wire.NewSet(repository.NewUserRepository, service.NewUserSe
 
 var setHealthHandler = wire.NewSet(repository.NewHealthRepository, service.NewHealthService, handler.NewHealthHandler)
 
-var setAppointmentHandler = wire.NewSet(repository.NewAppointmentRepository, service.NewAppointmentService, handler.NewAppointmentHandler)
+var setAppointmentHandler = wire.NewSet(repository.NewAppointmentRepository, repository.NewBlockchainRepository, service.NewAppointmentService, handler.NewAppointmentHandler)
