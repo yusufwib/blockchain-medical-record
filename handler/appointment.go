@@ -82,8 +82,6 @@ func (i *AppointmentHandler) FindAppointmentByPatientID(ctx echo.Context) error 
 		ID, _ = ctx.Get("doctor_id").(uint64)
 	}
 
-	ID = 3
-
 	i.Logger.InfoT(traceID, "get appointment by patient id", mlog.Any("id(p/d)", ID))
 
 	healthServiceID, _ := strconv.ParseUint(ctx.QueryParam("health_service_id"), 0, 64)
