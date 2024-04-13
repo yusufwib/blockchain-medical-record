@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jung-kurt/gofpdf"
 	"github.com/yusufwib/blockchain-medical-record/models/dappointment"
 	"github.com/yusufwib/blockchain-medical-record/models/dmedicalrecord"
 	"github.com/yusufwib/blockchain-medical-record/repository"
@@ -73,4 +74,86 @@ func (s AppointmentService) WriteMedicalRecord(ctx context.Context, req dmedical
 
 func (s AppointmentService) FindMedicalRecordByID(ctx context.Context, ID uint64) (res dmedicalrecord.MedicalRecord) {
 	return s.BlockchainRepository.GetBlocksByAppointmentID(ID)
+}
+
+func (s AppointmentService) ExportMedicalRecord(ctx context.Context, ID uint64) (res string, err error) {
+	// appointment, err := s.AppointmentRepository.FindAppointmentDetailByID(ctx, ID)
+	// if err != nil {
+	// 	return
+	// }
+
+	// if appointment.IsEmpty() {
+	// 	return "", fmt.Errorf("appointment is empty")
+	// }
+
+	// medcialRecord := s.BlockchainRepository.GetBlocksByAppointmentID(ID)
+
+	// if medcialRecord.IsEmpty() {
+	// 	return "", fmt.Errorf("medical record is empty")
+	// }
+	// Create new PDF document
+	// Create new PDF document
+	// Create new PDF document
+	pdf := gofpdf.New("P", "mm", "A4", "")
+
+	// Add a new page to the PDF
+	pdf.AddPage()
+
+	// Set font for keys (labels)
+	pdf.SetFont("Arial", "B", 16)
+
+	// Add title
+	pdf.Cell(0, 10, "Rekam Medis Elektronik")
+	pdf.Ln(12) // Line break
+
+	// Define content
+	content1 := map[string]string{
+		"Pasien:": "Hafiz Vario",
+		"Dokter:": "Dr. Erina Spesialis Tendangan Bebas",
+	}
+
+	// Add content to PDF
+	for label, value := range content1 {
+		pdf.Ln(8)
+		pdf.SetFont("Arial", "B", 10)
+		pdf.Cell(40, 10, label)
+		pdf.SetFont("Arial", "", 10)
+		pdf.Cell(40, 10, value)
+	}
+	pdf.Ln(17)
+	pdf.SetFont("Arial", "B", 12)
+
+	// Add title
+	pdf.Cell(0, 15, "Detail Rekam Medis")
+	pdf.Ln(4)
+	// Define content
+	content := map[string]string{
+		"ID Rekam Medis:":    "MR-202408071206",
+		"Tanggal Penulisan:": "28 Maret 2024",
+		"Pemeriksa:":         "Dr. Yusuf Banana - Dokter Umum",
+		"Usia:":              "22",
+		"Berat Badan:":       "75 kg",
+		"Tinggi Badan:":      "175 cm",
+		"Alergi:":            "Obat Paracetamol & Udang",
+		"Keluhan:":           "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		"Catatan:":           "Lorem ipsum",
+		"Gambar:":            "...",
+	}
+
+	// Add content to PDF
+	for label, value := range content {
+		pdf.Ln(8)
+		pdf.SetFont("Arial", "B", 10)
+		pdf.Cell(40, 10, label)
+		pdf.SetFont("Arial", "", 10)
+		pdf.Cell(40, 10, value)
+	}
+
+	// Save PDF to file
+	err = pdf.OutputFileAndClose("./public/medical-record/MR-202408071206.pdf")
+	if err != nil {
+		panic(err)
+	}
+
+	return
 }

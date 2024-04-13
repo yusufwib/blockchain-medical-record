@@ -25,6 +25,7 @@ type (
 		WriteMedicalRecord(ctx echo.Context) error
 		FindMedicalRecordByID(ctx echo.Context) error
 		FindAppointmentDetailByID(ctx echo.Context) error
+		ExportMedicalRecordByID(ctx echo.Context) error
 	}
 
 	AppointmentHandler struct {
@@ -219,6 +220,26 @@ func (i *AppointmentHandler) FindMedicalRecordByID(ctx echo.Context) error {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else if res.IsEmpty() {
 		return ErrorResponse(ctx, http.StatusNotFound, "No medical record found.", nil)
+	} else {
+		return SuccessResponse(ctx, http.StatusOK, res)
+	}
+}
+
+func (i *AppointmentHandler) ExportMedicalRecordByID(ctx echo.Context) error {
+	traceID := trace_id.GetID(ctx)
+	usecaseContext := trace_id.SetIDx(ctx.Request().Context(), traceID)
+
+	ID, err := strconv.ParseUint(ctx.Param("id"), 0, 64)
+	if err != nil {
+		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+	}
+
+	i.Logger.InfoT(traceID, "export medical record by appointment id", mlog.Any("id", ID))
+
+	if res, err := i.AppointmentService.ExportMedicalRecord(usecaseContext, ID); err != nil {
+		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	} else if res == "" {
+		return ErrorResponse(ctx, http.StatusNotFound, "No medical record / appointment found.", nil)
 	} else {
 		return SuccessResponse(ctx, http.StatusOK, res)
 	}
