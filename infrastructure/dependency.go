@@ -22,6 +22,7 @@ type Dependency struct {
 	UserHandler        handler.IUserHandler
 	HealthHandler      handler.IHealthHandler
 	AppointmentHandler handler.IAppointmentHandler
+	BlockchainHandler  handler.IBlockchainHandler
 }
 
 func NewDependency(
@@ -36,6 +37,7 @@ func NewDependency(
 		setUserHandler,
 		setHealthHandler,
 		setAppointmentHandler,
+		setBlockchainHandler,
 		wire.Struct(new(Dependency), "*"),
 	)
 	return nil
@@ -58,4 +60,9 @@ var setAppointmentHandler = wire.NewSet(
 	repository.NewBlockchainRepository,
 	service.NewAppointmentService,
 	handler.NewAppointmentHandler,
+)
+
+var setBlockchainHandler = wire.NewSet(
+	service.NewBlockchainService,
+	handler.NewBlockchainHandler,
 )

@@ -48,5 +48,8 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 	v1Appointment.GET("/export/:id", dependency.AppointmentHandler.ExportMedicalRecordByID)
 	v1Appointment.POST("/upload", dependency.AppointmentHandler.UploadFile)
 
+	v1Blockchain := v1.Group("/blockchain")
+	v1Blockchain.GET("/mine-all", dependency.BlockchainHandler.MineAll)
+
 	httpServer.Echo.GET("/swagger/*", echoSwagger.WrapHandler)
 }

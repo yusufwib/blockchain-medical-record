@@ -98,20 +98,25 @@ func (r *BlockchainRepository) saveBlockchain() {
 	}
 }
 
-func (r *BlockchainRepository) getBlocksByPatientID(patientID uint64) []dblockchain.Block {
-	var blocks []dblockchain.Block
-	for _, block := range bc.Chain {
+func (r *BlockchainRepository) getBlocksByPatientID(patientID uint64) (res []dblockchain.Block) {
+	blocks := r.GetAllBlocks()
+
+	for _, block := range blocks {
 		if block.PatientID == patientID {
+			if block.EncryptedData == "" {
+				continue
+			}
 			decryptedData, _ := blockchainhash.DecryptStruct(block.EncryptedData)
 			block.Data = decryptedData
-			blocks = append(blocks, block)
+
+			res = append(res, block)
 		}
 	}
-	return blocks
+	return res
 }
 
 func (r *BlockchainRepository) GetBlocksByAppointmentID(appointmentID uint64) (res dmedicalrecord.MedicalRecord) {
-	data := r.getAllBlocks()
+	data := r.GetAllBlocks()
 
 	for _, block := range data {
 		if block.AppointmentID == appointmentID {
@@ -123,7 +128,7 @@ func (r *BlockchainRepository) GetBlocksByAppointmentID(appointmentID uint64) (r
 	return
 }
 
-func (r *BlockchainRepository) getAllBlocks() (response []dblockchain.Block) {
+func (r *BlockchainRepository) GetAllBlocks() (response []dblockchain.Block) {
 	data, _ := r.LevelDB.Get([]byte(blockchainKey), nil)
 	json.Unmarshal(data, &response)
 

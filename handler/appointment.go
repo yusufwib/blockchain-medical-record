@@ -216,9 +216,8 @@ func (i *AppointmentHandler) FindMedicalRecordByID(ctx echo.Context) error {
 
 	i.Logger.InfoT(traceID, "get medical record by appointment id", mlog.Any("id", ID))
 
-	if res := i.AppointmentService.FindMedicalRecordByID(usecaseContext, ID); err != nil {
-		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-	} else if res.IsEmpty() {
+	res := i.AppointmentService.FindMedicalRecordByID(usecaseContext, ID)
+	if res.IsEmpty() {
 		return ErrorResponse(ctx, http.StatusNotFound, "No medical record found.", nil)
 	} else {
 		return SuccessResponse(ctx, http.StatusOK, res)

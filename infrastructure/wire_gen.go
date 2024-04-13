@@ -32,10 +32,13 @@ func NewDependency(context2 context.Context, logger mlog.Logger, validator mvali
 	blockchainRepository := repository.NewBlockchainRepository(levelDB, config2)
 	appointmentService := service.NewAppointmentService(appointmentRepository, blockchainRepository, logger)
 	iAppointmentHandler := handler.NewAppointmentHandler(context2, logger, validator, appointmentService)
+	blockchainService := service.NewBlockchainService(blockchainRepository)
+	iBlockchainHandler := handler.NewBlockchainHandler(context2, logger, validator, blockchainService)
 	dependency := &Dependency{
 		UserHandler:        iUserHandler,
 		HealthHandler:      iHealthHandler,
 		AppointmentHandler: iAppointmentHandler,
+		BlockchainHandler:  iBlockchainHandler,
 	}
 	return dependency
 }
@@ -46,6 +49,7 @@ type Dependency struct {
 	UserHandler        handler.IUserHandler
 	HealthHandler      handler.IHealthHandler
 	AppointmentHandler handler.IAppointmentHandler
+	BlockchainHandler  handler.IBlockchainHandler
 }
 
 var setUserHandler = wire.NewSet(repository.NewUserRepository, service.NewUserService, handler.NewUserHandler)
@@ -53,3 +57,5 @@ var setUserHandler = wire.NewSet(repository.NewUserRepository, service.NewUserSe
 var setHealthHandler = wire.NewSet(repository.NewHealthRepository, service.NewHealthService, handler.NewHealthHandler)
 
 var setAppointmentHandler = wire.NewSet(repository.NewAppointmentRepository, repository.NewBlockchainRepository, service.NewAppointmentService, handler.NewAppointmentHandler)
+
+var setBlockchainHandler = wire.NewSet(service.NewBlockchainService, handler.NewBlockchainHandler)
