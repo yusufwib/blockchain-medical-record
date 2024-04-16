@@ -48,6 +48,6 @@ func (i *BlockchainHandler) MineAll(ctx echo.Context) error {
 	if len(res) == 0 {
 		return ErrorResponse(ctx, http.StatusNotFound, "No medical records found", nil)
 	} else {
-		return SuccessResponse(ctx, http.StatusOK, res)
+		return ctx.JSON(http.StatusOK, res)
 	}
 }

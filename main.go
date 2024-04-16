@@ -50,5 +50,7 @@ func main() {
 		Context:         context.Background(),
 	}
 
+	// run nodes
+
 	infrastructure_http.NewHttpServer(application)
 }

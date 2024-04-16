@@ -2,47 +2,236 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/yusufwib/blockchain-medical-record/models/dblockchain"
 )
 
-// tbd rewrite
-var dataMining []dblockchain.Block
+type Blockchain struct {
+	Chain []dblockchain.Block `json:"chain"`
+}
 
-func fetchDataAndStoreToDB() {
+var blockchain Blockchain
+
+// Data directory to store node data
+const dataDirectory = "./data/"
+const nodesFile = "./nodes/nodes.json"
+
+func main() {
+	nodeID := flag.String("NODE_ID", "", "Node ID")
+	flag.Parse()
+
+	if *nodeID == "" {
+		fmt.Println("Please specify a node ID using --NODE_ID flag")
+		os.Exit(1)
+	}
+	// Run the blockchain node
+	runNode(*nodeID)
+}
+
+func mineBlock(nodeID string) (response []dblockchain.Block, err error) {
+	resp, err := http.Get("http://localhost:9009/v1/blockchain/mine-all")
+	if err != nil {
+		return response, fmt.Errorf("failed to fetch data: %v", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return response, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	resp.Body.Close()
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return response, fmt.Errorf("failed to store data to DB: %v", err)
+	}
+
+	// TODO: checking if the data is the same like another nodes.. if ok then save
+	filename := dataDirectory + fmt.Sprintf("%s.json", nodeID)
+
+	// Read existing block data from file
+	var blocks []dblockchain.Block
+	data, err := os.ReadFile(filename)
+	if err == nil {
+		err = json.Unmarshal(data, &blocks)
+		if err != nil {
+			log.Printf("Error unmarshalling block data: %v\n", err)
+			return
+		}
+	} else if !os.IsNotExist(err) {
+		log.Printf("Error reading existing block data: %v\n", err)
+	}
+
+	currentBlockMap := make(map[string]dblockchain.Block, 0)
+	for _, v := range blocks {
+		currentBlockMap[v.Hash] = v
+	}
+
+	for _, v := range response {
+		cBlock := currentBlockMap[v.Hash]
+		if cBlock.Hash == "" {
+			blockchain.Chain = append(blockchain.Chain, cBlock)
+			storeBlockData(cBlock, nodeID)
+
+			err = syncBlock(cBlock)
+			if err != nil {
+				log.Printf("Error syncing block: %v", err)
+			}
+		}
+	}
+
+	return
+}
+
+func storeBlockData(block dblockchain.Block, nodeID string) {
+	// Filename for storing block data
+	filename := dataDirectory + fmt.Sprintf("%s.json", nodeID)
+
+	// Read existing block data from file
+	var blocks []dblockchain.Block
+	data, err := os.ReadFile(filename)
+	if err == nil {
+		err = json.Unmarshal(data, &blocks)
+		if err != nil {
+			log.Printf("Error unmarshalling block data: %v\n", err)
+			return
+		}
+	} else if !os.IsNotExist(err) {
+		log.Printf("Error reading existing block data: %v\n", err)
+	}
+
+	// Remove any block with the same ID
+	updatedBlocks := make([]dblockchain.Block, 0)
+	for _, b := range blocks {
+		if b.Hash != block.Hash {
+			updatedBlocks = append(updatedBlocks, b)
+		}
+	}
+
+	// Append the new block
+	updatedBlocks = append(updatedBlocks, block)
+
+	// Marshal the updated blocks
+	data, err = json.Marshal(updatedBlocks)
+	if err != nil {
+		log.Printf("Error marshalling block data: %v\n", err)
+		return
+	}
+
+	// Write updated data back to the file
+	err = os.WriteFile(filename, data, 0644)
+	if err != nil {
+		log.Printf("Error writing block data to file: %v\n", err)
+	}
+}
+
+func runNode(nodeID string) {
+	// Register with discovery service
+	err := registerNodeWithDiscovery(nodeID)
+	if err != nil {
+		log.Fatalf("Error registering with discovery service: %v", err)
+	}
+	log.Printf("Node %s is running...\n", nodeID)
+
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		var response []dblockchain.Block
-		resp, err := http.Get("http://localhost:9009/v1/blockchain/mine-all")
+		_, err := mineBlock(nodeID)
 		if err != nil {
-			fmt.Println("Failed to fetch data:", err)
+			log.Printf("Error mining block: %v", err)
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Failed to read response body:", err)
-			continue
-		}
-
-		resp.Body.Close()
-
-		err = json.Unmarshal(body, &response)
-		if err != nil {
-			fmt.Println("Failed to store data to Badger DB:", err)
-		}
-
-		// checking if the data is the same like another nodes.. if ok then save
-		dataMining = response
 	}
 }
 
-func main() {
-	fetchDataAndStoreToDB()
+func syncBlock(newBlock dblockchain.Block) error {
+	// Query discovery service to get other nodes
+	otherNodes, err := loadNodes()
+	if err != nil {
+		return err
+	}
+
+	// Iterate over other nodes and update block data files
+	for _, node := range otherNodes {
+		storeBlockData(newBlock, node)
+	}
+
+	return nil
+}
+
+func loadNodes() ([]string, error) {
+	// Load nodes from nodes.json file
+	fileData, err := os.ReadFile(nodesFile)
+	if os.IsNotExist(err) {
+		// If file not found, create it
+		err := createNodesFile()
+		if err != nil {
+			return nil, err
+		}
+		// Return an empty array since the file was just created
+		return []string{}, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	var nodes []string
+	if err := json.Unmarshal(fileData, &nodes); err != nil {
+		return nil, err
+	}
+	return nodes, nil
+}
+
+func createNodesFile() error {
+	// Create an empty nodes.json file
+	emptyNodes := []string{}
+	data, err := json.Marshal(emptyNodes)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(nodesFile, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func saveNodes(nodes []string) error {
+	// Save nodes to nodes.json file
+	data, err := json.Marshal(nodes)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(nodesFile, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func registerNodeWithDiscovery(nodeID string) error {
+	// Load existing nodes
+	nodes, err := loadNodes()
+	if err != nil {
+		return err
+	}
+
+	// Add new node
+	nodes = append(nodes, nodeID)
+
+	// Save updated nodes
+	err = saveNodes(nodes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -45,7 +45,7 @@ func (r *HealthRepository) FindDoctorByHealthID(ctx context.Context, ID uint64) 
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	if err := trx.WithContext(ctxWT).Table(duser.TableName()).Select("doctors.*, users.*, health_services.name AS health_service_name").
+	if err := trx.WithContext(ctxWT).Table(duser.TableName()).Select("doctors.*, users.*, health_services.name AS health_service_name, doctors.id AS doctor_id").
 		Joins("LEFT JOIN doctors ON users.id = doctors.user_id").
 		Joins("JOIN health_services ON doctors.health_service_id = health_services.id").
 		Where("doctors.health_service_id = ?", ID).
