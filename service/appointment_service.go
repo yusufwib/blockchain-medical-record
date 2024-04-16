@@ -35,7 +35,7 @@ func (s AppointmentService) FindAppointmentDetailByID(ctx context.Context, ID ui
 	return s.AppointmentRepository.FindAppointmentDetailByID(ctx, ID)
 }
 
-func (s AppointmentService) CreateAppointment(ctx context.Context, patientID uint64, req dappointment.AppointmentCreateRequest) error {
+func (s AppointmentService) CreateAppointment(ctx context.Context, patientID uint64, req dappointment.AppointmentCreateRequest) (uint64, error) {
 	return s.AppointmentRepository.CreateAppointment(ctx, patientID, req)
 }
 

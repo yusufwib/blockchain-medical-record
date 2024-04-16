@@ -108,27 +108,27 @@ func (r *AppointmentRepository) FindAppointmentDetailByID(ctx context.Context, I
 	return
 }
 
-func (r *AppointmentRepository) CreateAppointment(ctx context.Context, patientID uint64, req dappointment.AppointmentCreateRequest) (err error) {
+func (r *AppointmentRepository) CreateAppointment(ctx context.Context, patientID uint64, req dappointment.AppointmentCreateRequest) (ID uint64, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	appointment := req.ToAppointment(patientID)
 	if err = trx.WithContext(ctxWT).Table(dappointment.TableName()).Create(&appointment).Error; err != nil {
-		return fmt.Errorf("error while create appointments: %w", err)
+		return 0, fmt.Errorf("error while create appointments: %w", err)
 	}
 
 	accessKey, err := r.generateAccessKey(appointment)
 	if err != nil {
-		return fmt.Errorf("error while generate access key: %w", err)
+		return 0, fmt.Errorf("error while generate access key: %w", err)
 	}
 
 	medicalRecordAccess := req.ToMedicalRecordAccess(appointment, accessKey)
 	if err = trx.WithContext(ctxWT).Table(dmedicalrecordaccess.TableName()).Create(&medicalRecordAccess).Error; err != nil {
-		return fmt.Errorf("error while create medical record access: %w", err)
+		return 0, fmt.Errorf("error while create medical record access: %w", err)
 	}
 
-	return
+	return appointment.ID, nil
 }
 
 func (r *AppointmentRepository) UpdateAppointmentStatus(ctx context.Context, ID uint64, req dappointment.AppointmentUpdateStatusRequest) (err error) {

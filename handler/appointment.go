@@ -143,10 +143,12 @@ func (i *AppointmentHandler) CreateAppointment(ctx echo.Context) error {
 	ID, _ := ctx.Get("patient_id").(uint64)
 	i.Logger.InfoT(traceID, "create appointment", mlog.Any("payload", req))
 
-	if err := i.AppointmentService.CreateAppointment(usecaseContext, ID, req); err != nil {
+	if id, err := i.AppointmentService.CreateAppointment(usecaseContext, ID, req); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else {
-		return SuccessResponse(ctx, http.StatusCreated, nil)
+		return SuccessResponse(ctx, http.StatusCreated, map[string]interface{}{
+			"id": id,
+		})
 	}
 }
 
