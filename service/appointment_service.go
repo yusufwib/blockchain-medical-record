@@ -62,6 +62,13 @@ func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.U
 	fmt.Println(currentDir)
 
 	fmt.Println(realDstPath)
+	dstDir := filepath.Dir(realDstPath)
+	err = os.MkdirAll(dstDir, os.ModePerm)
+	if err != nil {
+		fmt.Println("error create directory", err)
+		return "error", err
+	}
+
 	dst, err := os.Create(realDstPath)
 	if err != nil {
 		fmt.Println("error create file", err)
