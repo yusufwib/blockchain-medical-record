@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -44,6 +45,11 @@ func (s AppointmentService) UpdateAppointmentStatus(ctx context.Context, ID uint
 }
 
 func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.UploadFileRequest) (path string, err error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
 	src, err := req.File.Open()
 	if err != nil {
 		return "", err
@@ -51,7 +57,9 @@ func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.U
 	defer src.Close()
 
 	dstPath := filepath.Join("public", "documents", req.File.Filename)
-	dst, err := os.Create(dstPath)
+
+	realDstPath := filepath.Join(currentDir, "public/documents", req.File.Filename)
+	dst, err := os.Create(realDstPath)
 	if err != nil {
 		return "", err
 	}
@@ -149,11 +157,18 @@ func (s AppointmentService) ExportMedicalRecord(ctx context.Context, ID uint64) 
 		pdf.Cell(40, 10, value)
 	}
 
-	// Save PDF to file
-	err = pdf.OutputFileAndClose("./public/medical-record/MR-202408071206.pdf")
+	currentDir, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		return "", err
+	}
+	// Save PDF to file
+
+	path := fmt.Sprintf("public/medical-record/%d.pdf", ID)
+	err = pdf.OutputFileAndClose(currentDir + "/" + path)
+	if err != nil {
+		// panic(err)
+		return res, err
 	}
 
-	return
+	return path, nil
 }
