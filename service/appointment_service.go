@@ -57,11 +57,11 @@ func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.U
 	defer src.Close()
 
 	dstPath := filepath.Join("public", "documents", req.File.Filename)
-
 	realDstPath := filepath.Join(currentDir, "public/documents", req.File.Filename)
+
 	dst, err := os.Create(realDstPath)
 	if err != nil {
-		return "", err
+		return "error", err
 	}
 	defer dst.Close()
 
