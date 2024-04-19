@@ -39,6 +39,14 @@ func (r *UserRepository) FindByID(ctx context.Context, ID uint64, userType strin
 	return r.getUserByID(ctxWT, trx, ID, userType)
 }
 
+func (r *UserRepository) FindByRelatedID(ctx context.Context, ID uint64, userType string) (user duser.UserResponse, err error) {
+	trx := r.session(ctx)
+	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	return r.getUserByRelatedID(ctxWT, trx, ID, userType)
+}
+
 func (r *UserRepository) Login(ctx context.Context, req duser.UserLoginRequest) (res duser.UserLoginResponse, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -123,7 +131,7 @@ func (r *UserRepository) Register(ctx context.Context, req duser.UserRegisterReq
 }
 
 func (r *UserRepository) getUserByID(ctx context.Context, trx *gorm.DB, ID uint64, userType string) (user duser.UserResponse, err error) {
-	query := trx.WithContext(ctx).Table(duser.TableName())
+	query := trx.Debug().WithContext(ctx).Table(duser.TableName())
 
 	if userType == string(duser.Patient) {
 		query = query.Select("patients.*, users.*, patients.id AS patient_id").
@@ -135,6 +143,27 @@ func (r *UserRepository) getUserByID(ctx context.Context, trx *gorm.DB, ID uint6
 	}
 
 	if err = query.First(&user, ID).Error; err != nil {
+		return user, fmt.Errorf("err while get user by id: %w", err)
+	}
+
+	return user, nil
+}
+
+func (r *UserRepository) getUserByRelatedID(ctx context.Context, trx *gorm.DB, ID uint64, userType string) (user duser.UserResponse, err error) {
+	query := trx.Debug().WithContext(ctx).Table(duser.TableName())
+
+	if userType == string(duser.Patient) {
+		query = query.Select("patients.*, users.*, patients.id AS patient_id").
+			Joins("LEFT JOIN patients ON users.id = patients.user_id").
+			Where("patients.id = ?", ID)
+	} else if userType == string(duser.Doctor) {
+		query = query.Select("doctors.*, users.*, health_services.name AS health_service_name, doctors.id AS doctor_id").
+			Joins("LEFT JOIN doctors ON users.id = doctors.user_id").
+			Joins("JOIN health_services ON doctors.health_service_id = health_services.id").
+			Where("doctors.id = ?", ID)
+	}
+
+	if err = query.First(&user).Error; err != nil {
 		return user, fmt.Errorf("err while get user by id: %w", err)
 	}
 

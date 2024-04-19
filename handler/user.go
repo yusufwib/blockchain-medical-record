@@ -65,7 +65,7 @@ func (i *UserHandler) FindByID(ctx echo.Context) error {
 	userType := strings.ToUpper(ctx.Param("type"))
 	i.Logger.InfoT(traceID, "get user by id", mlog.Any("id", ID))
 
-	if user, err := i.UserService.FindByID(usecaseContext, ID, userType); err != nil {
+	if user, err := i.UserService.FindByID(usecaseContext, ID, userType, true); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else if user.IsEmpty() {
 		return ErrorResponse(ctx, http.StatusNotFound, "No users found", nil)
@@ -83,7 +83,7 @@ func (i *UserHandler) GetDetails(ctx echo.Context) error {
 
 	i.Logger.InfoT(traceID, "get user by id", mlog.Any("id", ID))
 
-	if user, err := i.UserService.FindByID(usecaseContext, ID, userType); err != nil {
+	if user, err := i.UserService.FindByID(usecaseContext, ID, userType, false); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else if user.IsEmpty() {
 		return ErrorResponse(ctx, http.StatusNotFound, "No users found", nil)
