@@ -28,7 +28,7 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 
 	v1User.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))
 	v1User.GET("/details", dependency.UserHandler.GetDetails)
-	v1User.GET("/:id", dependency.UserHandler.FindByID)
+	v1User.GET("/:type/:id", dependency.UserHandler.FindByID)
 
 	v1Service := v1.Group("/services")
 	v1Service.Use(JWTMiddleware(app.Cfg.Server.JWTSecretKey))

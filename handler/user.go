@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/yusufwib/blockchain-medical-record/models/duser"
 	"github.com/yusufwib/blockchain-medical-record/service"
@@ -61,9 +62,9 @@ func (i *UserHandler) FindByID(ctx echo.Context) error {
 		return ErrorResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 	}
 
+	userType := strings.ToUpper(ctx.Param("type"))
 	i.Logger.InfoT(traceID, "get user by id", mlog.Any("id", ID))
 
-	userType, _ := ctx.Get("type").(string)
 	if user, err := i.UserService.FindByID(usecaseContext, ID, userType); err != nil {
 		return ErrorResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 	} else if user.IsEmpty() {
