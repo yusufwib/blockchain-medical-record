@@ -59,6 +59,8 @@ func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.U
 	dstPath := filepath.Join("public", "documents", req.File.Filename)
 	realDstPath := filepath.Join(currentDir, "public/documents", req.File.Filename)
 
+	fmt.Println(currentDir)
+
 	fmt.Println(realDstPath)
 	dst, err := os.Create(realDstPath)
 	if err != nil {
