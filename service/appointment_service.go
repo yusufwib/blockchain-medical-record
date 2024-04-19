@@ -176,6 +176,10 @@ func (s AppointmentService) ExportMedicalRecord(ctx context.Context, ID uint64) 
 	// Save PDF to file
 
 	path := fmt.Sprintf("public/medical-record/%d.pdf", ID)
+	err = os.MkdirAll("public/medical-record", os.ModePerm)
+	if err != nil {
+		return "", err
+	}
 	err = pdf.OutputFileAndClose(currentDir + "/" + path)
 	if err != nil {
 		// panic(err)
