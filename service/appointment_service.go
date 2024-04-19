@@ -61,11 +61,13 @@ func (s AppointmentService) UploadFile(ctx context.Context, req dmedicalrecord.U
 
 	dst, err := os.Create(realDstPath)
 	if err != nil {
+		fmt.Println("error create file", err)
 		return "error", err
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
+		fmt.Println("error copy file", err)
 		return "", err
 	}
 
