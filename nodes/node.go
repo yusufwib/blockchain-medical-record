@@ -19,7 +19,6 @@ type Blockchain struct {
 
 var blockchain Blockchain
 
-// Data directory to store node data
 const dataDirectory = "./data/"
 const nodesFile = "./nodes/nodes.json"
 
@@ -33,6 +32,27 @@ func main() {
 	}
 	// Run the blockchain node
 	runNode(*nodeID)
+}
+
+func runNode(nodeID string) {
+	// Register with discovery service
+	err := registerNodeWithDiscovery(nodeID)
+	if err != nil {
+		log.Fatalf("Error registering with discovery service: %v", err)
+	}
+	log.Printf("Node %s is running...\n", nodeID)
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		_, err := mineBlock(nodeID)
+		if err != nil {
+			log.Printf("Error mining block: %v", err)
+			continue
+		}
+
+	}
 }
 
 func mineBlock(nodeID string) (response []dblockchain.Block, err error) {
@@ -54,19 +74,9 @@ func mineBlock(nodeID string) (response []dblockchain.Block, err error) {
 	}
 
 	// TODO: checking if the data is the same like another nodes.. if ok then save
-	filename := dataDirectory + fmt.Sprintf("%s.json", nodeID)
-
-	// Read existing block data from file
-	var blocks []dblockchain.Block
-	data, err := os.ReadFile(filename)
-	if err == nil {
-		err = json.Unmarshal(data, &blocks)
-		if err != nil {
-			log.Printf("Error unmarshalling block data: %v\n", err)
-			return
-		}
-	} else if !os.IsNotExist(err) {
-		log.Printf("Error reading existing block data: %v\n", err)
+	blocks, err := loadNodeData(nodeID)
+	if err != nil {
+		return response, fmt.Errorf("failed to load node data: %v", err)
 	}
 
 	currentBlockMap := make(map[string]dblockchain.Block, 0)
@@ -132,40 +142,77 @@ func storeBlockData(block dblockchain.Block, nodeID string) {
 	}
 }
 
-func runNode(nodeID string) {
-	// Register with discovery service
-	err := registerNodeWithDiscovery(nodeID)
-	if err != nil {
-		log.Fatalf("Error registering with discovery service: %v", err)
-	}
-	log.Printf("Node %s is running...\n", nodeID)
-
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		_, err := mineBlock(nodeID)
-		if err != nil {
-			log.Printf("Error mining block: %v", err)
-			continue
-		}
-
-	}
-}
-
 func syncBlock(newBlock dblockchain.Block) error {
-	// Query discovery service to get other nodes
 	otherNodes, err := loadNodes()
 	if err != nil {
 		return err
 	}
 
-	// Iterate over other nodes and update block data files
-	for _, node := range otherNodes {
-		storeBlockData(newBlock, node)
+	// map[nodeID]map[hash]encryptedData
+	blockHashMap := make(map[string]map[string]string, 0)
+	for _, nodeID := range otherNodes {
+		blocks, err := loadNodeData(nodeID)
+		if err != nil {
+			continue
+		}
+
+		for _, block := range blocks {
+			if blockHashMap[block.Hash] == nil {
+				blockHashMap[block.Hash] = make(map[string]string)
+			}
+			blockHashMap[block.Hash][nodeID] = block.EncryptedData
+		}
+	}
+
+	for hash, blockHash := range blockHashMap {
+		isValid := true
+		encryptedDataPivot := blockHash[otherNodes[0]]
+		pivotSameNode := []string{}
+		pivotNotSameNode := []string{}
+
+		for _, node := range otherNodes {
+			if encryptedDataPivot != blockHash[node] {
+				isValid = false
+				pivotNotSameNode = append(pivotNotSameNode, node)
+			} else {
+				pivotSameNode = append(pivotSameNode, node)
+			}
+		}
+
+		if !isValid {
+			log.Printf("Encrypted data is not the same for hash %s", hash)
+
+			gotHacked := pivotNotSameNode
+			if len(pivotNotSameNode) > len(pivotSameNode) {
+				gotHacked = pivotSameNode
+			}
+
+			for _, v := range gotHacked {
+				log.Printf("Node that got hacked on nodes %s", v)
+			}
+
+		}
 	}
 
 	return nil
+}
+
+func loadNodeData(nodeID string) (blocks []dblockchain.Block, err error) {
+	filename := dataDirectory + fmt.Sprintf("%s.json", nodeID)
+
+	// Read existing block data from file
+	data, err := os.ReadFile(filename)
+	if err == nil {
+		err = json.Unmarshal(data, &blocks)
+		if err != nil {
+			log.Printf("Error unmarshalling block data: %v\n", err)
+			return
+		}
+	} else if !os.IsNotExist(err) {
+		log.Printf("Error reading existing block data: %v\n", err)
+	}
+
+	return
 }
 
 func loadNodes() ([]string, error) {
@@ -222,6 +269,12 @@ func registerNodeWithDiscovery(nodeID string) error {
 	nodes, err := loadNodes()
 	if err != nil {
 		return err
+	}
+
+	for _, n := range nodes {
+		if n == nodeID {
+			return nil // Node already exists, no need to register again
+		}
 	}
 
 	// Add new node
