@@ -80,7 +80,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	if !filter.IsDoctor && filter.PatientID == 0 {
 		query = query.Where("appointments.patient_id = ?", ID)
-	} else {
+	} else if !(filter.IsDoctor && filter.PatientID != 0 && filter.AppointmentID != 0) {
 		query = query.Where("appointments.doctor_id = ?", ID)
 	}
 
