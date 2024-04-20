@@ -61,7 +61,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 		log.Printf("successfully checked appointment status")
 		log.Printf("checking access key...")
-		if err = r.checkAccessKey(medicalrecordaccess.AccessKey, fmt.Sprintf("%d", ID)); err != nil {
+		if err = r.checkAccessKey(medicalrecordaccess.AccessKey, fmt.Sprintf("%d", filter.PatientID)); err != nil {
 			return nil, fmt.Errorf("error while checking access key: %w", err)
 		}
 		log.Printf("successfully checked access key")
@@ -199,7 +199,7 @@ func (r *AppointmentRepository) generateAccessKey(appointment dappointment.Appoi
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(fmt.Sprintf("%d", appointment.DoctorID)))
+	signedToken, err := token.SignedString([]byte(fmt.Sprintf("%d", appointment.PatientID)))
 	if err != nil {
 		return "", err
 	}
