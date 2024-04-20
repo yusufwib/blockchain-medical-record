@@ -73,7 +73,6 @@ func mineBlock(nodeID string) (response []dblockchain.Block, err error) {
 		return response, fmt.Errorf("failed to store data to DB: %v", err)
 	}
 
-	// TODO: checking if the data is the same like another nodes.. if ok then save
 	blocks, err := loadNodeData(nodeID)
 	if err != nil {
 		return response, fmt.Errorf("failed to load node data: %v", err)
@@ -85,16 +84,19 @@ func mineBlock(nodeID string) (response []dblockchain.Block, err error) {
 	}
 
 	for _, v := range response {
-		cBlock := currentBlockMap[v.Hash]
-		if cBlock.Hash == "" {
-			blockchain.Chain = append(blockchain.Chain, cBlock)
-			storeBlockData(cBlock, nodeID)
+		// cBlock := currentBlockMap[v.Hash]
+		// if cBlock.Hash == "" {
+		blockchain.Chain = append(blockchain.Chain, v)
 
-			err = syncBlock(cBlock)
-			if err != nil {
-				log.Printf("Error syncing block: %v", err)
-			}
+		log.Println("\n\n\nLogging medical record block storage...")
+		storeBlockData(v, nodeID)
+
+		log.Println("Synchronizing block data...")
+		err = syncBlock()
+		if err != nil {
+			log.Printf("Error syncing block: %v", err)
 		}
+		// }
 	}
 
 	return
@@ -142,7 +144,7 @@ func storeBlockData(block dblockchain.Block, nodeID string) {
 	}
 }
 
-func syncBlock(newBlock dblockchain.Block) error {
+func syncBlock() error {
 	otherNodes, err := loadNodes()
 	if err != nil {
 		return err
@@ -180,7 +182,7 @@ func syncBlock(newBlock dblockchain.Block) error {
 		}
 
 		if !isValid {
-			log.Printf("Encrypted data is not the same for hash %s", hash)
+			log.Printf("\nDiscrepancy Alert: Encrypted data does not match hash %s", hash)
 
 			gotHacked := pivotNotSameNode
 			if len(pivotNotSameNode) > len(pivotSameNode) {
@@ -188,7 +190,7 @@ func syncBlock(newBlock dblockchain.Block) error {
 			}
 
 			for _, v := range gotHacked {
-				log.Printf("Node that got hacked on nodes %s", v)
+				log.Printf("\nSecurity Breach Detected: Node compromised on node %s", v)
 			}
 
 		}
@@ -205,7 +207,7 @@ func loadNodeData(nodeID string) (blocks []dblockchain.Block, err error) {
 	if err == nil {
 		err = json.Unmarshal(data, &blocks)
 		if err != nil {
-			log.Printf("Error unmarshalling block data: %v\n", err)
+			log.Printf("Error unmarshalling block data from load node %s: %v\n", nodeID, err)
 			return
 		}
 	} else if !os.IsNotExist(err) {
