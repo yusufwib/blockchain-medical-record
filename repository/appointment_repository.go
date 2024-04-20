@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/models/dappointment"
+	"github.com/yusufwib/blockchain-medical-record/models/dblockchain"
 	"github.com/yusufwib/blockchain-medical-record/models/dmedicalrecordaccess"
 	mlog "github.com/yusufwib/blockchain-medical-record/utils/logger"
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ func (r *AppointmentRepository) session(ctx context.Context) *gorm.DB {
 	return trx
 }
 
-func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, ID uint64, filter dappointment.AppointmentFilter) (res []dappointment.AppointmentResponse, err error) {
+func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, ID uint64, filter dappointment.AppointmentFilter, blocks []dblockchain.Block) (res []dappointment.AppointmentResponse, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
 	// trace_id.SetIDx(ctx, uuid.NewString())
@@ -101,6 +102,18 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	if err = query.Find(&res).Error; err != nil {
 		return nil, fmt.Errorf("error while retrieving appointments: %w", err)
+	}
+
+	blockMap := make(map[uint64]dblockchain.Block, 0)
+
+	for _, v := range blocks {
+		blockMap[v.AppointmentID] = v
+	}
+
+	for i, v := range res {
+		if v.Status == dappointment.AppointmentStatusDone && blockMap[v.ID] != (dblockchain.Block{}) {
+			res[i].Diagnose = blockMap[v.ID].Data.Diagnose
+		}
 	}
 
 	log.Printf("successfully decrypted medical record data")

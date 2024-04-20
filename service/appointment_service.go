@@ -29,7 +29,9 @@ func NewAppointmentService(ra repository.AppointmentRepository, rb repository.Bl
 }
 
 func (s AppointmentService) FindAppointmentByPatientID(ctx context.Context, ID uint64, filter dappointment.AppointmentFilter) ([]dappointment.AppointmentResponse, error) {
-	return s.AppointmentRepository.FindAppointmentByPatientID(ctx, ID, filter)
+	blocks := s.BlockchainRepository.GetBlocksByPatientID(ID)
+
+	return s.AppointmentRepository.FindAppointmentByPatientID(ctx, ID, filter, blocks)
 }
 
 func (s AppointmentService) FindAppointmentDetailByID(ctx context.Context, ID uint64) (dappointment.AppointmentResponse, error) {

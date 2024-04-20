@@ -17,6 +17,7 @@ type AppointmentResponse struct {
 	ScheduleTime      string            `json:"schedule_time"`
 	Allergies         string            `json:"allergies"`
 	BookingAt         time.Time         `json:"booking_at"`
+	Diagnose          string            `json:"diagnose,omitempty"`
 }
 
 func (a AppointmentResponse) IsEmpty() bool {

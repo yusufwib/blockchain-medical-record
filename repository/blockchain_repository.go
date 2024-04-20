@@ -43,7 +43,7 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 
 	log.Printf("adding block for patient ID: %d", req.PatientID)
 	var prevBlock dblockchain.Block
-	blockByPatient := r.getBlocksByPatientID(req.PatientID)
+	blockByPatient := r.GetBlocksByPatientID(req.PatientID)
 	if len(blockByPatient) == 0 {
 		log.Printf("creating genesis block for patient ID: %d", req.PatientID)
 		genesis := dblockchain.Block{
@@ -119,7 +119,7 @@ func (r *BlockchainRepository) saveBlockchain(new dblockchain.Block) {
 	}
 }
 
-func (r *BlockchainRepository) getBlocksByPatientID(patientID uint64) (res []dblockchain.Block) {
+func (r *BlockchainRepository) GetBlocksByPatientID(patientID uint64) (res []dblockchain.Block) {
 	blocks := r.GetAllBlocks()
 
 	for _, block := range blocks {
