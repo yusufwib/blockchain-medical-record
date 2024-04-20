@@ -56,7 +56,7 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 
 		bc.Chain = append(bc.Chain, genesis)
 		prevBlock = genesis
-		r.saveBlockchain()
+		r.saveBlockchain(genesis)
 	} else {
 		prevBlock = blockByPatient[len(blockByPatient)-1]
 	}
@@ -90,7 +90,7 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 	newBlock.Hash = blockchainhash.CalculateHash(newBlock)
 
 	bc.Chain = append(bc.Chain, newBlock)
-	r.saveBlockchain()
+	r.saveBlockchain(newBlock)
 	// log.Println("previous block hash is not valid")
 	// log.Println("failed to create block")
 
@@ -99,8 +99,16 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 	return newBlock
 }
 
-func (r *BlockchainRepository) saveBlockchain() {
-	data, err := json.Marshal(bc.Chain)
+func (r *BlockchainRepository) saveBlockchain(new dblockchain.Block) {
+	// data, err := json.Marshal(bc.Chain)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	blocks := r.GetAllBlocks()
+	blocks = append(blocks, new)
+
+	data, err := json.Marshal(blocks)
 	if err != nil {
 		log.Println(err)
 		return
