@@ -70,7 +70,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	log.Printf("decrypting medical record data...")
 
-	query := trx.WithContext(ctxWT).Table(dappointment.TableName()).
+	query := trx.WithContext(ctxWT).Table(dappointment.TableName()).Debug().
 		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name, patients.allergies, appointments.created_at AS booking_at").
 		Joins("JOIN doctors ON appointments.doctor_id = doctors.id").
 		Joins("JOIN users u1 ON doctors.user_id = u1.id").
@@ -100,7 +100,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 		query = query.Where("schedule_date = ?", filter.ScheduleDate)
 	}
 
-	if err = query.Find(&res).Order("appointments.id DESC").Error; err != nil {
+	if err = query.Order("appointments.id DESC").Find(&res).Error; err != nil {
 		return nil, fmt.Errorf("error while retrieving appointments: %w", err)
 	}
 
@@ -110,7 +110,6 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	blockMap := make(map[uint64]dblockchain.Block, 0)
 	for _, v := range blocks {
-		fmt.Println(v.AppointmentID)
 		if v.EncryptedData != "" {
 			blockMap[v.AppointmentID] = v
 		}
@@ -122,8 +121,6 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 		}
 		if v.Status == dappointment.AppointmentStatusDone {
 			res[i].Diagnose = blockMap[v.ID].Data.Diagnose
-		} else {
-			res[i].Diagnose = "diag"
 		}
 	}
 
