@@ -31,6 +31,9 @@ func main() {
 		os.Exit(1)
 	}
 	// Run the blockchain node
+	log.Printf("Registering node %s with discovery service...\n", *nodeID)
+	log.Printf("Preparing to start blockchain node %s...\n", *nodeID)
+	log.Printf("Node %s is starting...\n", *nodeID)
 	runNode(*nodeID)
 }
 
