@@ -155,3 +155,18 @@ func (r *BlockchainRepository) GetAllBlocks() (response []dblockchain.Block) {
 
 	return
 }
+
+func (r *BlockchainRepository) GetAllBlocksDecrypted() (res []dblockchain.Block) {
+	blocks := r.GetAllBlocks()
+	for _, block := range blocks {
+		if block.EncryptedData == "" {
+			continue
+		}
+		decryptedData, _ := blockchainhash.DecryptStruct(block.EncryptedData)
+		block.Data = decryptedData
+
+		res = append(res, block)
+	}
+
+	return res
+}
