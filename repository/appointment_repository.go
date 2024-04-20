@@ -115,6 +115,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	for i, v := range res {
 		if _, ok := blockMap[v.ID]; !ok {
+			fmt.Println("gaono")
 			continue
 		}
 		if v.Status == dappointment.AppointmentStatusDone {
