@@ -8,16 +8,18 @@ import (
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/models/dhealthservice"
 	"github.com/yusufwib/blockchain-medical-record/models/duser"
+	mlog "github.com/yusufwib/blockchain-medical-record/utils/logger"
 	"gorm.io/gorm"
 )
 
 type HealthRepository struct {
 	DB     *gorm.DB
 	Config *config.ConfigGroup
+	Logger mlog.Logger
 }
 
-func NewHealthRepository(DB *gorm.DB, cfg *config.ConfigGroup) HealthRepository {
-	return HealthRepository{DB, cfg}
+func NewHealthRepository(DB *gorm.DB, cfg *config.ConfigGroup, log mlog.Logger) HealthRepository {
+	return HealthRepository{DB, cfg, log}
 }
 
 func (r *HealthRepository) session(ctx context.Context) *gorm.DB {

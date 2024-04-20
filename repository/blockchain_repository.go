@@ -12,16 +12,18 @@ import (
 	"github.com/yusufwib/blockchain-medical-record/models/dblockchain"
 	"github.com/yusufwib/blockchain-medical-record/models/dmedicalrecord"
 	blockchainhash "github.com/yusufwib/blockchain-medical-record/utils/blockchain_hash"
+	mlog "github.com/yusufwib/blockchain-medical-record/utils/logger"
 	"github.com/yusufwib/blockchain-medical-record/utils/randstr"
 )
 
 type BlockchainRepository struct {
 	LevelDB *leveldb.DB
 	Config  *config.ConfigGroup
+	Logger  mlog.Logger
 }
 
-func NewBlockchainRepository(levelDB *leveldb.DB, cfg *config.ConfigGroup) BlockchainRepository {
-	return BlockchainRepository{levelDB, cfg}
+func NewBlockchainRepository(levelDB *leveldb.DB, cfg *config.ConfigGroup, log mlog.Logger) BlockchainRepository {
+	return BlockchainRepository{levelDB, cfg, log}
 }
 
 // Blockchain represents the blockchain as a slice of blocks.
@@ -39,9 +41,11 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 	bc.Lock()
 	defer bc.Unlock()
 
+	log.Printf("adding block for patient ID: %d", req.PatientID)
 	var prevBlock dblockchain.Block
 	blockByPatient := r.getBlocksByPatientID(req.PatientID)
 	if len(blockByPatient) == 0 {
+		log.Printf("creating genesis block for patient ID: %d", req.PatientID)
 		genesis := dblockchain.Block{
 			Index:     0,
 			Timestamp: time.Now().String(),
@@ -57,6 +61,7 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 		prevBlock = blockByPatient[len(blockByPatient)-1]
 	}
 
+	log.Printf("encyrpting data for patient ID: %d", req.PatientID)
 	// encrypt block
 	encryptedData, _ := blockchainhash.EncryptStruct(dmedicalrecord.MedicalRecord{
 		DoctorID:               req.DoctorID,
@@ -70,6 +75,9 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 		MedicalRecordNumber:    randstr.GenerateRandomString("EMR"),
 	})
 
+	log.Printf("creating block for patient ID: %d", req.PatientID)
+
+	log.Println("checking previous block hash...")
 	newBlock := dblockchain.Block{
 		Index:         prevBlock.Index + 1,
 		Timestamp:     time.Now().String(),
@@ -83,6 +91,11 @@ func (r *BlockchainRepository) AddBlockMedicalRecord(req dmedicalrecord.MedicalR
 
 	bc.Chain = append(bc.Chain, newBlock)
 	r.saveBlockchain()
+	// log.Println("previous block hash is not valid")
+	// log.Println("failed to create block")
+
+	log.Println("previous block hash is valid")
+	log.Println("block added successfully")
 	return newBlock
 }
 

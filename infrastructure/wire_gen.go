@@ -22,14 +22,14 @@ import (
 // Injectors from dependency.go:
 
 func NewDependency(context2 context.Context, logger mlog.Logger, validator mvalidator.Validator, config2 *config.ConfigGroup, database *gorm.DB, levelDB *leveldb.DB) *Dependency {
-	userRepository := repository.NewUserRepository(database, config2)
+	userRepository := repository.NewUserRepository(database, config2, logger)
 	userService := service.NewUserService(userRepository)
 	iUserHandler := handler.NewUserHandler(context2, logger, validator, userService)
-	healthRepository := repository.NewHealthRepository(database, config2)
+	healthRepository := repository.NewHealthRepository(database, config2, logger)
 	healthService := service.NewHealthService(healthRepository)
 	iHealthHandler := handler.NewHealthHandler(context2, logger, validator, healthService)
-	appointmentRepository := repository.NewAppointmentRepository(database, config2)
-	blockchainRepository := repository.NewBlockchainRepository(levelDB, config2)
+	appointmentRepository := repository.NewAppointmentRepository(database, config2, logger)
+	blockchainRepository := repository.NewBlockchainRepository(levelDB, config2, logger)
 	appointmentService := service.NewAppointmentService(appointmentRepository, blockchainRepository, logger)
 	iAppointmentHandler := handler.NewAppointmentHandler(context2, logger, validator, appointmentService)
 	blockchainService := service.NewBlockchainService(blockchainRepository)

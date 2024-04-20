@@ -10,6 +10,7 @@ import (
 	"github.com/yusufwib/blockchain-medical-record/models/ddoctor"
 	"github.com/yusufwib/blockchain-medical-record/models/dpatient"
 	"github.com/yusufwib/blockchain-medical-record/models/duser"
+	mlog "github.com/yusufwib/blockchain-medical-record/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -17,10 +18,11 @@ import (
 type UserRepository struct {
 	DB     *gorm.DB
 	Config *config.ConfigGroup
+	Logger mlog.Logger
 }
 
-func NewUserRepository(DB *gorm.DB, cfg *config.ConfigGroup) UserRepository {
-	return UserRepository{DB, cfg}
+func NewUserRepository(DB *gorm.DB, cfg *config.ConfigGroup, log mlog.Logger) UserRepository {
+	return UserRepository{DB, cfg, log}
 }
 
 func (r *UserRepository) session(ctx context.Context) *gorm.DB {

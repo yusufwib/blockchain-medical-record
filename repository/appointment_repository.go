@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -10,16 +11,18 @@ import (
 	"github.com/yusufwib/blockchain-medical-record/config"
 	"github.com/yusufwib/blockchain-medical-record/models/dappointment"
 	"github.com/yusufwib/blockchain-medical-record/models/dmedicalrecordaccess"
+	mlog "github.com/yusufwib/blockchain-medical-record/utils/logger"
 	"gorm.io/gorm"
 )
 
 type AppointmentRepository struct {
 	DB     *gorm.DB
 	Config *config.ConfigGroup
+	Logger mlog.Logger
 }
 
-func NewAppointmentRepository(DB *gorm.DB, cfg *config.ConfigGroup) AppointmentRepository {
-	return AppointmentRepository{DB, cfg}
+func NewAppointmentRepository(DB *gorm.DB, cfg *config.ConfigGroup, log mlog.Logger) AppointmentRepository {
+	return AppointmentRepository{DB, cfg, log}
 }
 
 func (r *AppointmentRepository) session(ctx context.Context) *gorm.DB {
@@ -33,25 +36,40 @@ func (r *AppointmentRepository) session(ctx context.Context) *gorm.DB {
 func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, ID uint64, filter dappointment.AppointmentFilter) (res []dappointment.AppointmentResponse, err error) {
 	trx := r.session(ctx)
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
+	// trace_id.SetIDx(ctx, uuid.NewString())
+	// traceID := trace_id.GetIDx(ctx)
 	defer cancel()
 
 	if filter.IsDoctor && filter.PatientID != 0 && filter.AppointmentID != 0 {
+		fmt.Println()
+		fmt.Println()
+		fmt.Println()
+
+		log.Printf("doctor with ID %d is trying to access patient with ID %d...", ID, filter.PatientID)
+
 		var medicalrecordaccess dmedicalrecordaccess.MedicalRecordAccess
-		if err = trx.Debug().WithContext(ctxWT).Table(dmedicalrecordaccess.TableName()).
+		if err = trx.WithContext(ctxWT).Table(dmedicalrecordaccess.TableName()).
 			Joins("JOIN appointments ON medical_record_accesses.appointment_id = appointments.id").
 			Where("appointments.id = ?", filter.AppointmentID).
 			Where("status = ?", dappointment.AppointmentStatusUpcoming).
 			First(&medicalrecordaccess).
 			Error; err != nil {
+			log.Printf("failed to check appointment status")
 			return nil, fmt.Errorf("error while retrieving access key: %w", err)
 		}
 
+		log.Printf("successfully checked appointment status")
+		log.Printf("checking access key...")
 		if err = r.checkAccessKey(medicalrecordaccess.AccessKey, fmt.Sprintf("%d", ID)); err != nil {
-			return nil, fmt.Errorf("error while check access key: %w", err)
+			return nil, fmt.Errorf("error while checking access key: %w", err)
 		}
+		log.Printf("successfully checked access key")
+		log.Printf("access granted!")
 	}
 
-	query := trx.Debug().WithContext(ctxWT).Table(dappointment.TableName()).
+	log.Printf("decrypting medical record data...")
+
+	query := trx.WithContext(ctxWT).Table(dappointment.TableName()).
 		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name, patients.allergies, appointments.created_at AS booking_at").
 		Joins("JOIN doctors ON appointments.doctor_id = doctors.id").
 		Joins("JOIN users u1 ON doctors.user_id = u1.id").
@@ -85,6 +103,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 		return nil, fmt.Errorf("error while retrieving appointments: %w", err)
 	}
 
+	log.Printf("successfully decrypted medical record data")
 	return
 }
 
@@ -93,7 +112,7 @@ func (r *AppointmentRepository) FindAppointmentDetailByID(ctx context.Context, I
 	ctxWT, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	query := trx.Debug().WithContext(ctxWT).Table(dappointment.TableName()).
+	query := trx.WithContext(ctxWT).Table(dappointment.TableName()).
 		Select("appointments.*, u1.name AS doctor_name, u2.name AS patient_name, hs.name AS health_service_name, patients.allergies, appointments.created_at AS booking_at").
 		Joins("JOIN doctors ON appointments.doctor_id = doctors.id").
 		Joins("JOIN users u1 ON doctors.user_id = u1.id").
@@ -167,6 +186,7 @@ func (r *AppointmentRepository) generateAccessKey(appointment dappointment.Appoi
 }
 
 func (r *AppointmentRepository) checkAccessKey(accessKey, privateKey string) (err error) {
+	// traceID := trace_id.GetIDx(ctx)
 	token, err := jwt.Parse(accessKey, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("invalid private key")
@@ -175,11 +195,15 @@ func (r *AppointmentRepository) checkAccessKey(accessKey, privateKey string) (er
 	})
 
 	if err != nil {
+		log.Printf("failed while parsing access key: %v", err)
+		log.Printf("access denied!")
 		return fmt.Errorf("error while parsing access key: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
+		log.Printf("invalid access key claims")
+		log.Printf("access denied!")
 		return fmt.Errorf("invalid access key claims")
 	}
 
@@ -188,10 +212,14 @@ func (r *AppointmentRepository) checkAccessKey(accessKey, privateKey string) (er
 
 	schedule, err := time.Parse("2006-01-02 15:04", fmt.Sprintf("%s %s", scheduleDate, scheduleTime))
 	if err != nil {
+		log.Printf("error while parsing schedule date or time: %v", err)
+		log.Printf("access denied!")
 		return fmt.Errorf("error while parsing schedule date or time: %w", err)
 	}
 
-	if schedule.Before(time.Now()) {
+	if time.Now().After(schedule) {
+		log.Printf("invalid access key: schedule date or time is invalid")
+		log.Printf("access denied!")
 		return fmt.Errorf("invalid access key: schedule date or time is invalid")
 	}
 

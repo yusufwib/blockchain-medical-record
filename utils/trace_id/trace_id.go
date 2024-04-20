@@ -27,6 +27,15 @@ func GetID(ctx echo.Context) string {
 	return requestID
 }
 
+func GetIDx(ctx context.Context) string {
+	requestID, ok := ctx.Value(keyCtx(requestIDKey)).(string)
+	if !ok {
+		return ""
+	}
+
+	return requestID
+}
+
 func SetIDx(ctx context.Context, requsetID string) context.Context {
 	return context.WithValue(ctx, keyCtx(requestIDKey), requsetID)
 }
