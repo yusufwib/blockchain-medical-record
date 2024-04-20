@@ -100,7 +100,7 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 		query = query.Where("schedule_date = ?", filter.ScheduleDate)
 	}
 
-	if err = query.Find(&res).Error; err != nil {
+	if err = query.Find(&res).Order("appointments.id DESC").Error; err != nil {
 		return nil, fmt.Errorf("error while retrieving appointments: %w", err)
 	}
 
@@ -110,12 +110,14 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 
 	blockMap := make(map[uint64]dblockchain.Block, 0)
 	for _, v := range blocks {
-		blockMap[v.AppointmentID] = v
+		fmt.Println(v.AppointmentID)
+		if v.EncryptedData != "" {
+			blockMap[v.AppointmentID] = v
+		}
 	}
 
 	for i, v := range res {
 		if _, ok := blockMap[v.ID]; !ok {
-			fmt.Println("gaono")
 			continue
 		}
 		if v.Status == dappointment.AppointmentStatusDone {
