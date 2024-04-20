@@ -104,15 +104,23 @@ func (r *AppointmentRepository) FindAppointmentByPatientID(ctx context.Context, 
 		return nil, fmt.Errorf("error while retrieving appointments: %w", err)
 	}
 
-	blockMap := make(map[uint64]dblockchain.Block, 0)
+	if filter.Status != "DONE" {
+		return
+	}
 
+	blockMap := make(map[uint64]dblockchain.Block, 0)
 	for _, v := range blocks {
 		blockMap[v.AppointmentID] = v
 	}
 
 	for i, v := range res {
-		if v.Status == dappointment.AppointmentStatusDone && blockMap[v.ID] != (dblockchain.Block{}) {
+		if _, ok := blockMap[v.ID]; !ok {
+			continue
+		}
+		if v.Status == dappointment.AppointmentStatusDone {
 			res[i].Diagnose = blockMap[v.ID].Data.Diagnose
+		} else {
+			res[i].Diagnose = "diag"
 		}
 	}
 
