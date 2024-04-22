@@ -16,7 +16,7 @@ func (httpServer *HttpServer) PrepareRoute(app *infrastructure.App) {
 
 	httpServer.Echo.GET("", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{
-			"message": "Welcome to Blockchain Medical Record API",
+			"message": "Welcome to Blockchain Medical Record API v1.0.7",
 		})
 	})
 
